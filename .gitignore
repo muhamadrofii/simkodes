@@ -20,3 +20,15 @@ yarn-error.log
 /.vscode
 /storage/logs
 /storage/framework
+
+# Local uploads / generated files
+/public/incoming_letters/
+/public/outgoing_letters/
+/public/member_files/
+/public/officer_files/
+/public/supervisor_files/
+/public/category_images/
+/public/images/members/
+/storage/logs/laravel.log
+*.zip
+.envprod
