@@ -14,8 +14,8 @@
                 {{-- form pencarian --}}
                 <form action="{{ route('members.index') }}" method="GET">
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control form-search" 
-                               value="{{ request('search') }}" placeholder="Cari nama anggota ..." autocomplete="off">
+                        <input type="text" name="search" class="form-control form-search"
+                            value="{{ request('search') }}" placeholder="Cari nama anggota ..." autocomplete="off">
                         <button class="btn btn-primary btn-search" type="submit">Cari</button>
                     </div>
                 </form>
@@ -28,18 +28,21 @@
             {{-- jika data ada, tampilkan data --}}
             <div class="col-lg-6 col-xl-3">
                 <div class="bg-white rounded-4 shadow-sm text-center p-4 mb-4">
-                    {{-- <div class="mb-4">
-                        @if ($member->ttd)
-                            <img src="{{ asset('storage/members/' . $member->ttd) }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Tanda Tangan">
+                    <div class="mb-4">
+                        @if ($member->image)
+                            <img src="{{ asset('member_files/' . $member->image) }}" class="img-thumbnail rounded-5" width="110"
+                                alt="Foto">
+                        @elseif ($member->ttd)
+                            <img src="{{ asset('member_files/' . $member->ttd) }}" class="img-thumbnail rounded-5" width="110"
+                                alt="Tanda Tangan">
                         @elseif ($member->cap_ibu_jari)
-                            <img src="{{ asset('storage/members/' . $member->cap_ibu_jari) }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Cap Ibu Jari">
+                            <img src="{{ asset('member_files/' . $member->cap_ibu_jari) }}" class="img-thumbnail rounded-5"
+                                width="110" alt="Cap Ibu Jari">
                         @else
-                            <img src="{{ asset('storage/public/members/') }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Default">
+                            <img src="{{ asset('images/no-image.svg') }}" class="img-thumbnail rounded-5" width="110"
+                                alt="Default">
                         @endif
-                    </div> --}}
+                    </div>
 
                     <h6>{{ $member->nama }}</h6>
                     <p class="text-muted mb-4">
@@ -47,8 +50,7 @@
                     </p>
 
                     {{-- button detail --}}
-                    <a href="{{ route('members.show', $member->id) }}" 
-                       class="btn btn-primary btn-action-icon">
+                    <a href="{{ route('members.show', $member->id) }}" class="btn btn-primary btn-action-icon">
                         Detail <i class="ti ti-chevron-right ms-2"></i>
                     </a>
                 </div>

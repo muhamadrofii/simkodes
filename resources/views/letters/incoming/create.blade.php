@@ -24,14 +24,14 @@
 
             {{-- Reference Number --}}
             <div class="mb-4">
-                <label for="ref_number" class="form-label fw-semibold">Nomor Surat</label>
+                <label for="reference_number" class="form-label fw-semibold">Nomor Surat</label>
                 <input type="text" 
-                       name="ref_number" 
-                       id="ref_number" 
-                       class="form-control @error('ref_number') is-invalid @enderror"
-                       value="{{ old('ref_number') }}" 
+                       name="reference_number" 
+                       id="reference_number" 
+                       class="form-control @error('reference_number') is-invalid @enderror"
+                       value="{{ old('reference_number') }}" 
                        placeholder="Enter reference number">
-                @error('ref_number')
+                @error('reference_number')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>

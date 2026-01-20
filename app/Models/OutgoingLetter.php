@@ -17,6 +17,6 @@ class OutgoingLetter extends Model
         'sender',
         'recipient',
         'summary',
-        'file_path',
+        'file',
     ];
 }

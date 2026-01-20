@@ -14,7 +14,8 @@
                 {{-- form pencarian --}}
                 <form action="{{ route('categories.index') }}" method="GET">
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control form-search" value="{{ request('search') }}" placeholder="Search category ..." autocomplete="off">
+                        <input type="text" name="search" class="form-control form-search"
+                            value="{{ request('search') }}" placeholder="Search category ..." autocomplete="off">
                         <button class="btn btn-primary btn-search" type="submit">Cari</button>
                     </div>
                 </form>
@@ -28,7 +29,8 @@
             <div class="col-lg-6 col-xl-3">
                 <div class="bg-white rounded-4 shadow-sm text-center p-4 p-lg-4-2 mb-4">
                     <div class="mb-2">
-                        <img src="{{ asset('/storage/public/categories/'.$category->image) }}" class="img-thumbnail rounded-5" width="80" alt="Images">
+                        <img src="{{ asset('category_images/' . $category->image) }}" class="img-thumbnail rounded-5"
+                            width="80" alt="Images">
                     </div>
                     <p class="text-muted mb-2"><small>Kategori</small></p>
                     <h6 class="mb-4">{{ $category->name }}</h6>

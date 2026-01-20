@@ -4,13 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\OutgoingLetter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+
+use Exception;
 
 class OutgoingLetterController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil data dengan urutan terbaru dan pagination
-        $outgoingletters = OutgoingLetter::latest()->paginate(12);
+        $query = OutgoingLetter::latest();
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('reference_number', 'like', "%{$search}%")
+                    ->orWhere('recipient', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        $outgoingletters = $query->paginate(12)->withQueryString();
 
         return view('letters.outgoing.index', compact('outgoingletters'));
     }
@@ -34,7 +48,7 @@ class OutgoingLetterController extends Controller
             $file = $request->file('file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('outgoing_letters'), $filename);
-            $validated['file'] = 'outgoing_letters/' . $filename;
+            $validated['file'] = $filename;
         }
 
         OutgoingLetter::create($validated);
@@ -66,13 +80,22 @@ class OutgoingLetterController extends Controller
         ]);
 
         if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('outgoing_letters'), $filename);
-            $validated['file'] = 'outgoing_letters/' . $filename;
+            try {
+                if (File::exists(public_path('outgoing_letters/' . $letter->file))) {
+                    File::delete(public_path('outgoing_letters/' . $letter->file));
+                }
+
+                $file = $request->file('file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+
+                $file->move(public_path('outgoing_letters'), $filename);
+                $letter->file = $filename;
+            } catch (Exception $e) {
+                dd($e->getMessage());
+            }
         }
 
-        $letter->update($validated);
+        $letter->update($request->except(['file']));
 
         return redirect()->route('outgoingletters.index')->with('success', 'Outgoing letter updated!');
     }
@@ -82,9 +105,11 @@ class OutgoingLetterController extends Controller
         $letter = OutgoingLetter::findOrFail($id);
 
         // Hapus file fisik jika ada
-        if ($letter->file && file_exists(public_path($letter->file))) {
-            unlink(public_path($letter->file));
+        if ($letter->file && File::exists(public_path('outgoing_letters/' . $letter->file))) {
+            File::delete(public_path('outgoing_letters/' . $letter->file));
         }
+
+
 
         $letter->delete();
 

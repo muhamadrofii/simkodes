@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
+
 <head>
     <meta charset="UTF-8">
-    <title>KTA Supervisor - Koperasi Merah Putih</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>KTA Supervisor Premium</title>
     <style>
         @page {
             size: A5 landscape;
@@ -12,140 +12,183 @@
 
         body {
             margin: 0;
-            font-family: 'Poppins', sans-serif;
-            font-size: 12px;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Bagian Atas Merah */
+        .header-bg {
+            background-color: #b71c1c;
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 50%, #8b0000 100%);
+            border-bottom: 6px solid #ffc107;
+            padding: 15px 30px;
+            color: #ffffff;
+            height: 130px;
+        }
+
+        .title-main {
+            font-size: 28px;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .title-sub {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+        .title-addr {
+            font-size: 11px;
+            margin: 0;
+        }
+
+        .motto {
+            font-size: 13px;
+            font-style: italic;
+            color: #ffca28;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Bagian Konten */
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .content-area {
+            padding: 30px 45px;
+            vertical-align: top;
+        }
+
+        .name-tag {
+            font-size: 26px;
+            font-weight: bold;
+            color: #b71c1c;
+            border-bottom: 3px solid #b71c1c;
+            display: inline-block;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 7px 0;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .label {
+            color: #555;
+            width: 150px;
+        }
+
+        .value {
+            font-weight: bold;
             color: #000;
         }
 
-        .kta {
-            position: relative;
-            width: 794px;
-            height: 559px;
-            overflow: hidden;
+        /* Foto Area */
+        .photo-column {
+            width: 200px;
+            padding: 30px 45px 30px 0;
+            vertical-align: top;
+            text-align: right;
         }
 
-        .background-img {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            z-index: 0;
-        }
-
-        .content {
-            position: absolute;
-            top: 40px; left: 90px; right: 130px; bottom: 30px;
-            z-index: 1;
-        }
-
-        .header {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        .subheader {
-            text-align: center;
-            font-size: 13px;
-            font-style: italic;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .badge {
-            text-align: center;
-            font-size: 14px;
-            font-weight: 700;
-            background-color: #1565c0;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
+        .photo-frame {
+            width: 145px;
+            height: 185px;
+            border: 4px solid #fff;
+            background-color: #eeeeee;
             display: inline-block;
-            margin-bottom: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .data td {
-            padding: 3px 6px;
-            font-size: 12px;
-        }
-
-        .data td:first-child {
-            width: 140px;
-            font-weight: 600;
-        }
-
-        .photo {
-            position: absolute;
-            top: 140px;
-            right: 100px;
-            width: 90px;
-            height: 110px;
-            border: 2px solid #000;
-            background-color: #f9f9f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .footer {
-            position: absolute;
-            bottom: 30px;
-            left: 100px;
-            right: 100px;
-            font-size: 11px;
-            text-align: center;
-            border-top: 1px solid #aaa;
-            padding-top: 6px;
+        /* Footer Area */
+        .footer-cell {
+            padding: 10px 45px;
+            border-top: 1px solid #dddddd;
+            font-size: 10px;
+            color: #888888;
         }
     </style>
 </head>
+
 <body>
-    <div class="kta">
-        {{-- Background --}}
-        <img src="data:image/png;base64,{{ $kop }}" alt="Background" class="background-img" />
+    <table class="container" border="0" cellspacing="0" cellpadding="0">
+        <!-- BARIS HEADER -->
+        <tr>
+            <td colspan="2" class="header-bg">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="90" align="left">
+                            <img src="{{ $logoMerah }}" width="75">
+                        </td>
+                        <td align="center" style="color: #ffffff;">
+                            <div class="title-main">KARTU TANDA PENGAWAS</div>
+                            <div class="title-sub">KOPERASI MERAH PUTIH DESA SRANAK</div>
+                            <div class="title-addr">KECAMATAN TRUCUK, BOJONEGORO, JAWA TIMUR</div>
+                            <div class="motto">"Merah Putih, Mandiri dan Sejahtera"</div>
+                        </td>
+                        <td width="90" align="right">
+                            <img src="{{ $logoSim }}" width="75">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
 
-        <div class="content">
-            <div class="header">
-                KARTU TANDA SUPERVISOR<br>
-                KOPERASI MERAH PUTIH DESA SRANAK
-            </div>
-            <div class="subheader">
-                Merah Putih, Mandiri, dan Sejahtera
-            </div>
+        <!-- BARIS KONTEN (NAMA & DATA) -->
+        <tr>
+            <td class="content-area">
+                <div class="name-tag">{{ strtoupper($supervisor->nama) }}</div>
+                <table class="data-table" width="100%">
+                    <tr>
+                        <td class="label">ID PENGAWAS</td>
+                        <td class="value">SUP-{{ str_pad($supervisor->id, 5, '0', STR_PAD_LEFT) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">JABATAN</td>
+                        <td class="value">{{ strtoupper($supervisor->jabatan ?? 'PENGAWAS') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">JENIS KELAMIN</td>
+                        <td class="value">{{ $supervisor->jenis_kelamin == 'L' ? 'LAKI-LAKI' : 'PEREMPUAN' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">ALAMAT</td>
+                        <td class="value">{{ strtoupper($supervisor->tempat_tinggal ?? '-') }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td class="photo-column">
+                <div class="photo-frame">
+                    @if ($photoBase64)
+                        <img src="{{ $photoBase64 }}" width="100%" height="100%">
+                    @else
+                        <div style="text-align: center; padding-top: 80px; color: #ccc;">FOTO</div>
+                    @endif
+                </div>
+            </td>
+        </tr>
 
-            {{-- Badge Supervisor --}}
-            <div class="badge">SUPERVISOR</div>
-
-            <table class="data">
-                <tr><td>Nama Lengkap</td><td>:</td><td>{{ $supervisor->nama }}</td></tr>
-                <tr><td>Jabatan</td><td>:</td><td>{{ $supervisor->jabatan ?? 'Supervisor' }}</td></tr>
-                <tr><td>Mata Pencaharian</td><td>:</td><td>{{ $supervisor->mata_pencaharian ?? '-' }}</td></tr>
-                <tr><td>Alamat</td><td>:</td><td>{{ $supervisor->tempat_tinggal ?? '-' }}</td></tr>
-                <tr><td>Tanggal Dipilih</td><td>:</td><td>{{ $supervisor->tanggal_dipilih ? date('d F Y', strtotime($supervisor->tanggal_dipilih)) : '-' }}</td></tr>
-            </table>
-        </div>
-
-        {{-- Foto --}}
-        <div class="photo">
-            @if ($photoBase64)
-                <img src="{{ $photoBase64 }}" alt="Foto Supervisor">
-            @else
-                Foto<br>Tidak Ada
-            @endif
-        </div>
-
-        <div class="footer">
-            <strong>Koperasi Merah Putih</strong> – Desa Sranak, Kecamatan Trucuk, Bojonegoro<br>
-            Ditetapkan pada: {{ now()->translatedFormat('d F Y') }}
-        </div>
-    </div>
+        <!-- BARIS FOOTER -->
+        <tr>
+            <td colspan="2" class="footer-cell">
+                Kartu ini merupakan identitas resmi Pengawas Koperasi Merah Putih Desa Sranak. Segala wewenang diatur
+                sesuai AD/ART Koperasi.
+            </td>
+        </tr>
+    </table>
 </body>
+
 </html>

@@ -10,7 +10,8 @@
                     <i class="ti ti-edit me-2"></i> Edit
                 </a>
                 {{-- button modal hapus data --}}
-                <button type="button" class="btn btn-danger btn-action-icon" data-bs-toggle="modal" data-bs-target="#modalDelete{{ $category->id }}"> 
+                <button type="button" class="btn btn-danger btn-action-icon" data-bs-toggle="modal"
+                    data-bs-target="#modalDelete{{ $category->id }}">
                     <i class="ti ti-trash me-2"></i> Hapus
                 </button>
             </div>
@@ -25,12 +26,13 @@
         {{-- tampilkan detail data --}}
         <div class="d-flex flex-column flex-xl-row">
             <div class="flex-shrink-0 mb-4 mb-xl-0">
-                <img src="{{ asset('/storage/public/categories/'.$category->image) }}" class="img-thumbnail rounded-5 shadow-sm" width="100" alt="Image">
+                <img src="{{ asset('category_images/' . $category->image) }}" class="img-thumbnail rounded-5 shadow-sm"
+                    width="100" alt="Image">
             </div>
             <div class="flex-grow-1 pt-2 ms-xl-4">
                 <h6 class="text-muted fw-light mb-2">Nama</h6>
                 <p class="mb-4">{{ $category->name }}</p>
-            
+
                 <h6 class="text-muted fw-light mb-2">Deskripsi</h6>
                 <p style="text-align: justify" class="mb-4 fw-light">{{ $category->description }}</p>
             </div>
@@ -38,7 +40,8 @@
     </div>
 
     {{-- Modal hapus data --}}
-    <div class="modal fade" id="modalDelete{{ $category->id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalDeleteLabel" aria-hidden="true">
+    <div class="modal fade" id="modalDelete{{ $category->id }}" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="modalDeleteLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -53,7 +56,8 @@
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-action-icon" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-secondary btn-action-icon"
+                        data-bs-dismiss="modal">Batal</button>
                     {{-- button hapus data --}}
                     <form action="{{ route('categories.destroy', $category->id) }}" method="POST">
                         @csrf

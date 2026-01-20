@@ -21,7 +21,7 @@
                 {{-- Reference Number --}}
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Reference Number</label>
-                    <input type="text" name="ref_number" class="form-control" value="{{ old('ref_number', $letter->ref_number) }}">
+                    <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number', $letter->reference_number) }}">
                 </div>
 
                 {{-- Category --}}

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\File;
 
 class CategoryController extends Controller
 {
@@ -51,20 +52,25 @@ class CategoryController extends Controller
     {
         // validasi form
         $request->validate([
-            'name'        => 'required|unique:categories',
+            'name' => 'required|unique:categories',
             'description' => 'required',
-            'image'       => 'required|image|mimes: jpeg,jpg,png|max: 1024'
+            'image' => 'required|image|mimes: jpeg,jpg,png|max: 1024'
         ]);
 
         // upload image
         $image = $request->file('image');
-        $image->storeAs('public/categories', $image->hashName());
+        $nama_image = $image->hashName();
+        //$image->storeAs('public/categories', $image->hashName());
+
+        if ($request->hasFile('image')) {
+            $image->move(public_path('category_images'), $nama_image);
+        }
 
         // create data
         Category::create([
-            'name'        => $request->name,
+            'name' => $request->name,
             'description' => $request->description,
-            'image'       => $image->hashName()
+            'image' => $nama_image
         ]);
 
         // redirect ke halaman index dan tampilkan pesan berhasil simpan data
@@ -102,9 +108,9 @@ class CategoryController extends Controller
     {
         // validasi form
         $request->validate([
-            'name'        => 'required|unique:categories,name,' . $id,
+            'name' => 'required|unique:categories,name,' . $id,
             'description' => 'required',
-            'image'       => 'image|mimes: jpeg,jpg,png|max: 1024'
+            'image' => 'image|mimes: jpeg,jpg,png|max: 1024'
         ]);
 
         // get data by ID
@@ -114,23 +120,34 @@ class CategoryController extends Controller
         if ($request->hasFile('image')) {
             // upload image baru
             $image = $request->file('image');
-            $image->storeAs('public/categories', $image->hashName());
+            $nama_image = $image->hashName();
+            //$image->storeAs('categories/', $image->hashName());
+            if ($request->hasFile('image')) {
+                $image->move(public_path('category_images'), $nama_image);
+            }
 
             // delete image lama
-            Storage::delete('public/categories/' . $category->image);
+            // Storage::delete('categories/' . $category->image);
+
+            $filePath = public_path('category_images/' . $category->image);
+
+            if (File::exists($filePath)) {
+                File::delete($filePath);
+            }
+
 
             // update data
             $category->update([
-                'name'        => $request->name,
+                'name' => $request->name,
                 'description' => $request->description,
-                'image'       => $image->hashName()
+                'image' => $nama_image
             ]);
         }
         // jika image tidak diubah
         else {
             // update data
             $category->update([
-                'name'        => $request->name,
+                'name' => $request->name,
                 'description' => $request->description
             ]);
         }
@@ -148,7 +165,12 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         // delete image
-        Storage::delete('public/categories/' . $category->image);
+        //Storage::delete('categories/' . $category->image);
+        $filePath = public_path('category_images/' . $category->image);
+
+        if (File::exists($filePath)) {
+            File::delete($filePath);
+        }
 
         // delete data
         $category->delete();

@@ -21,7 +21,7 @@
                 {{-- Reference Number --}}
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">No. Surat</label>
-                    <input type="text" name="ref_number" class="form-control" value="{{ old('ref_number', $letter->ref_number) }}">
+                    <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number', $letter->reference_number) }}">
                 </div>
 
                 {{-- Category --}}
@@ -35,7 +35,7 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Current File</label>
                         <div class="border rounded p-2 bg-light d-flex align-items-center justify-content-between">
-                            <a href="{{ asset($letter->file) }}" target="_blank" class="text-decoration-none">
+                            <a href="{{ asset('outgoing_letters/'.$letter->file) }}" target="_blank" class="text-decoration-none">
                                 {{ basename($letter->file) }}
                             </a>
                             <i class="ti ti-file fs-5 text-primary"></i>
@@ -60,3 +60,4 @@
         </form>
     </div>
 </x-app-layout>
+

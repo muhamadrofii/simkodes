@@ -25,19 +25,20 @@ class ReportController extends Controller
     {
         // validasi form
         $request->validate([
-            'start_date' => 'required',
-            'end_date'   => 'required|date|after:start_date'
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date'
         ]);
 
         // data filter
         $startDate = $request->start_date;
-        $endDate   = $request->end_date;
+        $endDate = $request->end_date;
 
         // menampilkan data berdasarkan filter
         $members = Member::with('category:id,name')
-            ->whereBetween('join_date', [$startDate, $endDate])
+            ->whereBetween('tanggal_masuk', [$startDate, $endDate])
             ->oldest()
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         // tampilkan data ke view
         return view('report.index', compact('members'));
@@ -47,10 +48,10 @@ class ReportController extends Controller
      * print
      */
     public function print($startDate, $endDate)
-    {   
+    {
         // menampilkan data berdasarkan filter
         $members = Member::with('category:id,name')
-            ->whereBetween('join_date', [$startDate, $endDate])
+            ->whereBetween('tanggal_masuk', [$startDate, $endDate])
             ->oldest()
             ->get();
 

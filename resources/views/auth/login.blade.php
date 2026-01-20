@@ -2,17 +2,15 @@
     <div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
         <div class="mx-auto" style="max-width: 500px;">
             <div class="bg-white rounded-4 shadow-lg p-4 p-md-5 text-center">
-                
+
                 {{-- Logo dengan background biru dongker --}}
                 <div class="d-inline-flex align-items-center justify-content-center mb-4"
-                     style="width: 180px; height: 180px; background-color: #0b1e3f; border-radius: 30px; overflow: hidden;">
-                    <img src="{{ asset('images/logokop.svg') }}" 
-                         alt="Logo Koperasi" 
-                         class="logo-zoom"
-                         style="width: 160px; height: 160px; object-fit: cover; transition: transform 0.4s ease;">
+                    style="width: 180px; height: 180px; background-color: #0b1e3f; border-radius: 30px; overflow: hidden;">
+                    <img src="{{ asset('images/logokop.svg') }}" alt="Logo Koperasi" class="logo-zoom"
+                        style="width: 160px; height: 160px; object-fit: cover; transition: transform 0.4s ease;">
                 </div>
-                
-                <h4 class="mb-4 text-dark">Masuk ke <strong>Pendataan Anggota</strong></h4>
+
+                <h4 class="mb-4 text-dark">Masuk ke <strong>SIMKODES</strong></h4>
 
                 {{-- Pesan error jika login gagal --}}
                 @if (session('error'))

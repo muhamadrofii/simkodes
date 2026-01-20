@@ -26,6 +26,16 @@ class Category extends Model
      */
     public function members(): HasMany
     {
-        return $this->hasMany(Member::class);
+        return $this->hasMany(Member::class, 'category_id');
+    }
+    
+    public function supervisors(): HasMany
+    {
+        return $this->hasMany(Supervisor::class, 'category_id');
+    }
+    
+    public function officers(): HasMany
+    {
+        return $this->hasMany(Officer::class, 'category_id');
     }
 }

@@ -131,7 +131,7 @@
                         <div class="mt-4">
                             @if ($supervisor->image)
                                 <img id="imagePreview" 
-                                     src="{{ asset('storage/supervisors/' . $supervisor->image) }}" 
+                                     src="{{ asset('supervisor_files/' . $supervisor->image) }}" 
                                      class="img-thumbnail rounded-5 shadow-sm" width="50%" alt="Image">
                             @else
                                 <p class="text-muted">Belum ada foto profil</p>
@@ -149,7 +149,7 @@
                         @enderror
                         @if ($supervisor->ttd_ketua)
                             <div class="mt-3">
-                                <img src="{{ asset('storage/supervisors/' . $supervisor->ttd_ketua) }}" 
+                                <img src="{{ asset('supervisor_files/' . $supervisor->ttd_ketua) }}" 
                                      class="img-thumbnail rounded-5 shadow-sm" width="40%" alt="TTD Ketua">
                             </div>
                         @endif

@@ -14,8 +14,8 @@
                 {{-- form pencarian --}}
                 <form action="{{ route('officers.index') }}" method="GET">
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control form-search" 
-                               value="{{ request('search') }}" placeholder="Cari nama pengurus ..." autocomplete="off">
+                        <input type="text" name="search" class="form-control form-search"
+                            value="{{ request('search') }}" placeholder="Cari nama pengurus ..." autocomplete="off">
                         <button class="btn btn-primary btn-search" type="submit">Cari</button>
                     </div>
                 </form>
@@ -28,18 +28,18 @@
             {{-- jika data ada, tampilkan data --}}
             <div class="col-lg-6 col-xl-3">
                 <div class="bg-white rounded-4 shadow-sm text-center p-4 mb-4">
-                    {{-- <div class="mb-4">
+                    <div class="mb-4">
                         @if ($officer->image)
-                            <img src="{{ asset('storage/officers/' . $officer->image) }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Foto Pengurus">
+                            <img src="{{ asset('officer_files/' . $officer->image) }}" class="img-thumbnail rounded-5"
+                                width="110" alt="Foto Pengurus">
                         @elseif ($officer->ttd)
-                            <img src="{{ asset('storage/officers/' . $officer->ttd) }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Tanda Tangan">
+                            <img src="{{ asset('officer_files/' . $officer->ttd) }}" class="img-thumbnail rounded-5" width="110"
+                                alt="Tanda Tangan">
                         @else
-                            <img src="{{ asset('images/default.png') }}" 
-                                 class="img-thumbnail rounded-5" width="110" alt="Default">
+                            <img src="{{ asset('images/no-image.svg') }}" class="img-thumbnail rounded-5" width="110"
+                                alt="Default">
                         @endif
-                    </div> --}}
+                    </div>
 
                     <h6>{{ $officer->nama }}</h6>
                     {{-- <p class="text-muted mb-2">
@@ -50,8 +50,7 @@
                     </p>
 
                     {{-- button detail --}}
-                    <a href="{{ route('officers.show', $officer->id) }}" 
-                       class="btn btn-primary btn-action-icon">
+                    <a href="{{ route('officers.show', $officer->id) }}" class="btn btn-primary btn-action-icon">
                         Detail <i class="ti ti-chevron-right ms-2"></i>
                     </a>
                 </div>

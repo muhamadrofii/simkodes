@@ -10,6 +10,9 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
+        if (auth()->check()) {
+            return redirect()->route('dashboard');
+        }
         return view('auth.login'); // pastikan file view-nya sesuai
     }
 
@@ -28,4 +31,5 @@ class LoginController extends Controller
         }
 
 }
+
 

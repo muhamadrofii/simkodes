@@ -14,7 +14,7 @@
             {{-- Reference Number --}}
             <div class="col-md-6">
                 <label class="form-label fw-semibold">No. Surat</label>
-                <div class="form-control bg-light">{{ $letter->ref_number ?? '-' }}</div>
+                <div class="form-control bg-light">{{ $letter->reference_number ?? '-' }}</div>
             </div>
 
             {{-- Category --}}
@@ -28,10 +28,21 @@
                 <label class="form-label fw-semibold">Attached File</label>
                 @if ($letter->file)
                     <div class="border rounded p-3 bg-light d-flex align-items-center justify-content-between">
-                        <a href="{{ asset($letter->file) }}" target="_blank" class="text-decoration-none">
+                        <a href="{{ asset('incoming_letters/' . $letter->file) }}" target="_blank"
+                            class="text-decoration-none">
                             {{ basename($letter->file) }}
                         </a>
-                        <i class="ti ti-file-text fs-5 text-primary"></i>
+                        @php
+                            $extension = pathinfo($letter->file, PATHINFO_EXTENSION);
+                            $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                        @endphp
+                        @if ($isImage)
+                            <i class="ti ti-photo fs-5 text-success"></i>
+                        @elseif ($extension && strtolower($extension) === 'pdf')
+                            <i class="ti ti-file-type-pdf fs-5 text-danger"></i>
+                        @else
+                            <i class="ti ti-file-text fs-5 text-primary"></i>
+                        @endif
                     </div>
                 @else
                     <div class="form-control bg-light">No file uploaded.</div>
@@ -56,6 +67,38 @@
             </div>
         </div>
     </div>
+
+    {{-- File Preview Section --}}
+    @if ($letter->file)
+        <div class="bg-white rounded-4 shadow-sm p-4">
+            <h5 class="fw-semibold mb-4 d-flex align-items-center">
+                <i class="ti ti-eye me-2 text-primary"></i> Preview File
+            </h5>
+
+            <div class="rounded-3 border overflow-hidden bg-light d-flex justify-content-center align-items-center"
+                style="min-height: 400px;">
+                @php
+                    $extension = pathinfo($letter->file, PATHINFO_EXTENSION);
+                    $filePath = asset('incoming_letters/' . $letter->file);
+                @endphp
+
+                @if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                    <img src="{{ $filePath }}" alt="{{ $letter->title }}" class="img-fluid" style="max-height: 800px;">
+                @elseif (strtolower($extension) === 'pdf')
+                    <iframe src="{{ $filePath }}" width="100%" height="800px" style="border: none;"></iframe>
+                @else
+                    <div class="text-center p-5">
+                        <i class="ti ti-file-off fs-1 text-muted mb-3"></i>
+                        <p class="text-muted">Preview not available for this file type ({{ strtoupper($extension) }}).<br>
+                            <a href="{{ $filePath }}" target="_blank" class="btn btn-primary mt-3">
+                                <i class="ti ti-download me-1"></i> Download File
+                            </a>
+                        </p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     {{-- Delete Confirmation Modal --}}
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">

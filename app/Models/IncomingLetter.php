@@ -17,6 +17,6 @@ class IncomingLetter extends Model
         'sender',
         'recipient',
         'summary',
-        'file_path',
+        'file',
     ];
 }

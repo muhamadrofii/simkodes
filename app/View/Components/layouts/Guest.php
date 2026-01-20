@@ -1,6 +1,5 @@
 <?php
 
-namespace App\View\Components;
 namespace App\View\Components\Layouts;
 
 use Illuminate\View\Component;
@@ -9,6 +8,6 @@ class Guest extends Component
 {
     public function render()
     {
-        return view('layouts.guest');
+        return view('components.layouts.guest');
     }
 }

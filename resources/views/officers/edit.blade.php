@@ -130,7 +130,7 @@
                         <div class="mt-4">
                             @if ($officer->image)
                                 <img id="imagePreview" 
-                                     src="{{ asset('storage/officers/' . $officer->image) }}" 
+                                     src="{{ asset('officer_files/' . $officer->image) }}" 
                                      class="img-thumbnail rounded-5 shadow-sm" width="50%" alt="Image">
                             @else
                                 <p class="text-muted">Belum ada foto profil</p>
@@ -148,7 +148,7 @@
                         @enderror
                         @if ($officer->ttd)
                             <div class="mt-3">
-                                <img src="{{ asset('storage/officers/' . $officer->ttd) }}" 
+                                <img src="{{ asset('officer_files/' . $officer->ttd) }}" 
                                      class="img-thumbnail rounded-5 shadow-sm" width="40%" alt="TTD">
                             </div>
                         @endif
