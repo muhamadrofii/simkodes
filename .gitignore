@@ -32,3 +32,15 @@ yarn-error.log
 /storage/logs/laravel.log
 *.zip
 .envprod
+!/public/category_images/
+!/public/category_images/.gitkeep
+!/public/incoming_letters/
+!/public/incoming_letters/.gitkeep
+!/public/outgoing_letters/
+!/public/outgoing_letters/.gitkeep
+!/public/member_files/
+!/public/member_files/.gitkeep
+!/public/officer_files/
+!/public/officer_files/.gitkeep
+!/public/supervisor_files/
+!/public/supervisor_files/.gitkeep
