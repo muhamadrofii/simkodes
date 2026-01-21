@@ -22,13 +22,13 @@ yarn-error.log
 /storage/framework
 
 # Local uploads / generated files
-/public/incoming_letters/
-/public/outgoing_letters/
-/public/member_files/
-/public/officer_files/
-/public/supervisor_files/
-/public/category_images/
-/public/images/members/
+/public/*
+!/public/css/
+!/public/css/**
+!/public/images/
+!/public/images/**
+!/public/js/
+!/public/js/**
 /storage/logs/laravel.log
 *.zip
 .envprod
