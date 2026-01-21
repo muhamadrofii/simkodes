@@ -22,7 +22,7 @@ yarn-error.log
 /storage/framework
 
 # Local uploads / generated files
-/public/*
+/public/**
 !/public/css/
 !/public/css/**
 !/public/images/
