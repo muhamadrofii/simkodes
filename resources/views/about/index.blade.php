@@ -10,7 +10,7 @@
                 </div>
                 <div>
                     <h5 class="lh-2 mb-3">Copyright</h5>
-                    <p class="text-muted">&copy; 2025 - <a href="https://unugiri.ac.id/" target="_blank" class="text-brand text-decoration-none">UNUGIRI</a> - Pengabdian Kepada Masyarakat 2025</p>
+                    <p class="text-muted">&copy; {{ now()->year }} - <a href="https://unugiri.ac.id/" target="_blank" class="text-brand text-decoration-none">UNUGIRI</a> - Pengabdian Kepada Masyarakat {{ now()->year }}</p>
                 </div>
             </div>
         </div>
