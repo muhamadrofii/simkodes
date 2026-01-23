@@ -38,9 +38,13 @@ class DashboardController extends Controller
             'categories' => Category::count(),
         ];
 
-        // data grafik jumlah member per kategori
+        // data grafik jumlah anggota per kategori (anggota + pengurus + pengawas)
         $memberCategoryLabels = $categories->pluck('name');
-        $memberCategoryCounts = $categories->pluck('members_count');
+        $memberCategoryCounts = $categories->map(
+            fn ($category) => (int) $category->members_count
+                + (int) $category->officers_count
+                + (int) $category->supervisors_count
+        );
 
         // data grafik surat masuk/keluar per bulan (6 bulan terakhir)
         $startMonth = Carbon::now()->startOfMonth()->subMonths(5);

@@ -172,7 +172,9 @@
                         </div>
                         <div>
                             <p class="text-muted mb-1"><small>Kategori {{ $category->name }}</small></p>
-                            <h5 class="fw-bold mb-0">{{ $category->members_count }}</h5>
+                            <h5 class="fw-bold mb-0">
+                                {{ $category->members_count + $category->officers_count + $category->supervisors_count }}
+                            </h5>
                         </div>
                     </div>
                 </div>
