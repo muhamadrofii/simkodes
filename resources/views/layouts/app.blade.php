@@ -28,6 +28,9 @@
 
     {{-- Template CSS --}}
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+
+    {{-- Hotwire Turbo --}}
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@7.3.0/dist/turbo.es2017-umd.js" defer></script>
 </head>
 
 <body>
@@ -81,6 +84,39 @@
                 timer: 2000
             });
         @endif
+
+        // Sidebar Toggle
+        document.addEventListener('turbo:load', function() {
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const toggleBtnInternal = document.getElementById('sidebarToggleInternal');
+            const body = document.body;
+
+            const toggleSidebar = function(e) {
+                e.stopPropagation();
+                body.classList.toggle('sidebar-toggled');
+            };
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleSidebar);
+            }
+            if (toggleBtnInternal) {
+                toggleBtnInternal.addEventListener('click', toggleSidebar);
+            }
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (body.classList.contains('sidebar-toggled') && window.innerWidth < 768) {
+                    const sidebar = document.querySelector('.sidebar-new');
+                    const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
+                    const isClickToggleBtn = toggleBtn && (event.target === toggleBtn || toggleBtn.contains(event.target));
+                    const isClickInternalToggleBtn = toggleBtnInternal && (event.target === toggleBtnInternal || toggleBtnInternal.contains(event.target));
+                    
+                    if (!isClickInsideSidebar && !isClickToggleBtn && !isClickInternalToggleBtn) {
+                        body.classList.remove('sidebar-toggled');
+                    }
+                }
+            });
+        });
     </script>
 
     @stack('scripts')

@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\IncomingLetterController;
 use App\Http\Controllers\OutgoingLetterController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\SubsidyCheckController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -21,10 +22,8 @@ use Illuminate\Support\Facades\Auth;
 
 // Index: Jika sudah login, ke dashboard. Jika belum, ke login.
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('dashboard');
-    }
-    return redirect()->route('login');
+    // Landing page
+    return view('landing');
 });
 
 // Login
@@ -37,16 +36,17 @@ Route::post('/logout', function () {
     request()->session()->invalidate();
     request()->session()->regenerateToken();
 
-    return redirect()->route('login');
+    return redirect('/');
+
 })->name('logout');
 
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register']);
 
-// Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Dashboard (butuh login)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // Route::middleware([CheckSessionTimeout::class])->group(function () {
+    Route::middleware([CheckSessionTimeout::class])->group(function () {
     Route::get('/members', [MemberController::class, 'index'])->name('members.index');
     Route::get('/members/{id}/kta', [MemberController::class, 'printKTA'])->name('members.kta');
 
@@ -103,8 +103,6 @@ Route::post('register', [RegisterController::class, 'register']);
     Route::delete('/outgoingletters/{id}', [OutgoingLetterController::class, 'destroy'])->name('outgoingletters.destroy');
 
 
-    Route::get('/outgoing-letters', [OutgoingLetterController::class, 'index'])->name('outgoingletters.index');
-
     // use App\Http\Controllers\InventoryController;
 
     // ========== INVENTORIES ROUTES ==========
@@ -131,8 +129,25 @@ Route::post('register', [RegisterController::class, 'register']);
     Route::get('/report/print/{start_date}/{end_date}', [ReportController::class, 'print'])->name('report.print');
 
 
+    // ========== SUBSIDY CHECK & MANAGEMENT ROUTES ==========
+    Route::get('/subsidies/reports', [SubsidyCheckController::class, 'reportIndex'])->name('subsidies.reports.index');
+    Route::get('/subsidies/reports/pdf', [SubsidyCheckController::class, 'reportPdf'])->name('subsidies.reports.pdf');
+    Route::get('/subsidies/reports/excel', [SubsidyCheckController::class, 'reportExcel'])->name('subsidies.reports.excel');
+
+    Route::get('/subsidies', [SubsidyCheckController::class, 'subsidyIndex'])->name('subsidies.index');
+    Route::post('/subsidies', [SubsidyCheckController::class, 'subsidyStore'])->name('subsidies.store');
+    Route::put('/subsidies/{id}', [SubsidyCheckController::class, 'subsidyUpdate'])->name('subsidies.update');
+    Route::delete('/subsidies/{id}', [SubsidyCheckController::class, 'subsidyDestroy'])->name('subsidies.destroy');
+    Route::post('/subsidies/{id}/import', [SubsidyCheckController::class, 'subsidyImport'])->name('subsidies.import');
+
+    Route::get('/subsidychecks', [SubsidyCheckController::class, 'index'])->name('subsidychecks.index');
+    Route::post('/subsidychecks/check', [SubsidyCheckController::class, 'check'])->name('subsidychecks.check');
+    Route::post('/subsidychecks', [SubsidyCheckController::class, 'store'])->name('subsidychecks.store');
+    Route::delete('/subsidychecks/{id}', [SubsidyCheckController::class, 'destroy'])->name('subsidychecks.destroy');
+
     Route::get('/about', function () {
         return view('about.index');
     })->name('about');
 
-// });
+    }); // end CheckSessionTimeout middleware
+}); // end auth middleware

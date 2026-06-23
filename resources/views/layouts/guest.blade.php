@@ -27,7 +27,7 @@
 <body class="bg-light">
 
     <main class="container my-5">
-        @yield('content')
+        {{ $slot }}
     </main>
 
     {{-- JS --}}

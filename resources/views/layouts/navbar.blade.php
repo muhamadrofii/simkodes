@@ -33,6 +33,10 @@
             <i class="ti ti-archive"></i>
             <span>Inventaris</span>
         </x-navbar-link>
+        <x-navbar-link href="{{ route('subsidychecks.index') }}" :active="request()->routeIs('subsidychecks.*')">
+            <i class="ti ti-discount-check"></i>
+            <span>Subsidi</span>
+        </x-navbar-link>
         <x-navbar-link href="{{ route('about') }}" :active="request()->routeIs('about')">
             <i class="ti ti-file-info"></i>
             <span>Tentang</span>

@@ -44,7 +44,7 @@ if [[ "$BUILD_ASSETS" == "yes" ]]; then
     "$NPM_BIN" run build
   else
     echo "Node/npm not found. Set BUILD_ASSETS=no or install Node."
-    exit 1
+    exit 1c
   fi
 fi
 

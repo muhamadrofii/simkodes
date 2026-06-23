@@ -110,15 +110,28 @@ class OfficerController extends Controller
     {
         $officer = Officer::findOrFail($id);
 
-        // Encode Logos
-        $logoMerahData = base64_encode(file_get_contents(public_path('images/kopmerah.png')));
-        $logoMerah = 'data:image/png;base64,' . $logoMerahData;
+        // Helper: resolve path yang aman untuk lokal & hosting
+        $resolvePath = function ($relativePath) {
+            $path = public_path($relativePath);
+            if (!file_exists($path)) {
+                $path = base_path('public/' . $relativePath);
+            }
+            return $path;
+        };
 
-        $logoSimData = base64_encode(file_get_contents(public_path('images/kopnew.png')));
-        $logoSim = 'data:image/png;base64,' . $logoSimData;
+        // Encode Logos
+        $logoMerahPath = $resolvePath('images/kopmerah.png');
+        $logoMerah = file_exists($logoMerahPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoMerahPath))
+            : '';
+
+        $logoSimPath = $resolvePath('images/kopnew.png');
+        $logoSim = file_exists($logoSimPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoSimPath))
+            : '';
 
         $photoFile = $officer->image ?? $officer->ttd;
-        $photoPath = $photoFile ? public_path('officer_files/' . $photoFile) : null;
+        $photoPath = $photoFile ? $resolvePath('officer_files/' . $photoFile) : null;
 
         if ($photoPath && file_exists($photoPath)) {
             $photoData = base64_encode(file_get_contents($photoPath));

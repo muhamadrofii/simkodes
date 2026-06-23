@@ -127,7 +127,7 @@
         </form>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('turbo:load', function () {
             const jumlahInput = document.getElementById('jumlah');
             const hargaInput = document.getElementById('harga_satuan');
             const totalInput = document.getElementById('jumlah_rupiah');

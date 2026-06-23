@@ -16,19 +16,19 @@ class LoginController extends Controller
         return view('auth.login'); // pastikan file view-nya sesuai
     }
 
-// LoginController.php
-        public function login(Request $request)
-        {
-            $credentials = $request->only('email', 'password');
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
 
-            if (Auth::attempt($credentials)) {
-                $request->session()->regenerate();
-                return redirect()->intended('/dashboard');
-            }
-
-            // Jika gagal
-            return back()->with('error', 'Email atau password salah.');
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            $request->session()->put('last_activity', time());
+            return redirect()->intended('/dashboard');
         }
+
+        // Jika gagal
+        return back()->with('error', 'Email atau password salah.');
+    }
 
 }
 
