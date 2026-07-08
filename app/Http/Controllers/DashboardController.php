@@ -9,6 +9,7 @@ use App\Models\Member;
 use App\Models\Officer;
 use App\Models\OutgoingLetter;
 use App\Models\Supervisor;
+use App\Models\SubsidyCheck;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -36,6 +37,8 @@ class DashboardController extends Controller
             'incoming_letters' => IncomingLetter::count(),
             'outgoing_letters' => OutgoingLetter::count(),
             'categories' => Category::count(),
+            'subsidy_programs' => SubsidyCheck::whereNull('parent_id')->count(),
+            'subsidy_claims' => SubsidyCheck::whereNotNull('parent_id')->count(),
         ];
 
         // data grafik jumlah anggota per kategori (anggota + pengurus + pengawas)

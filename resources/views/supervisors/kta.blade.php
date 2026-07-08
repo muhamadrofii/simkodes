@@ -15,6 +15,10 @@
             padding: 0;
             font-family: Arial, sans-serif;
             background-color: #ffffff;
+            background-image: url('{{ $bgKta }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .container {
@@ -24,9 +28,6 @@
 
         /* Bagian Atas Merah */
         .header-bg {
-            background-color: #b71c1c;
-            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 50%, #8b0000 100%);
-            border-bottom: 6px solid #ffc107;
             padding: 15px 30px;
             color: #ffffff;
             height: 130px;
@@ -127,20 +128,20 @@
     <table class="container" border="0" cellspacing="0" cellpadding="0">
         <!-- BARIS HEADER -->
         <tr>
-            <td colspan="2" class="header-bg">
+            <td colspan="2" class="header-bg" style="vertical-align: middle;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                     <tr>
-                        <td width="90" align="left">
-                            <img src="{{ $logoMerah }}" width="75">
+                        <td width="75">
+                            <!-- Kosong agar logo kiri pada background terlihat -->
                         </td>
-                        <td align="center" style="color: #ffffff;">
-                            <div class="title-main">KARTU TANDA PENGAWAS</div>
-                            <div class="title-sub">KOPERASI MERAH PUTIH DESA SRANAK</div>
-                            <div class="title-addr">KECAMATAN TRUCUK, BOJONEGORO, JAWA TIMUR</div>
-                            <div class="motto">"Merah Putih, Mandiri dan Sejahtera"</div>
+                        <td align="center" style="vertical-align: middle;">
+                            <div class="title-main" style="font-size: 24px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: 1px; color: #b71c1c;">KARTU TANDA PENGAWAS</div>
+                            <div class="title-sub" style="font-size: 13px; font-weight: bold; margin: 3px 0; color: #001f3f;">KOPERASI MERAH PUTIH DESA SRANAK</div>
+                            <div class="title-addr" style="font-size: 9px; color: #555555;">KECAMATAN TRUCUK, BOJONEGORO, JAWA TIMUR</div>
+                            <div class="motto" style="font-size: 11px; font-style: italic; color: #d84315; font-weight: bold; margin-top: 3px;">"Merah Putih, Mandiri dan Sejahtera"</div>
                         </td>
-                        <td width="90" align="right">
-                            <img src="{{ $logoSim }}" width="75">
+                        <td width="75">
+                            <!-- Kosong agar logo kanan pada background terlihat -->
                         </td>
                     </tr>
                 </table>

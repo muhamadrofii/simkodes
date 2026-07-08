@@ -7,7 +7,7 @@
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
                 <h5 class="fw-bold text-dark mb-1">Pengecekan Kuota & Penerimaan Subsidi</h5>
-                <p class="text-muted mb-0 small">Sistem validasi penerima bantuan berdasarkan Nomor KK (1 KK hanya boleh 1 penerima per program).</p>
+                <p class="text-muted mb-0 small">Sistem validasi penerima bantuan berdasarkan NIK atau Nomor KK (Cukup isi salah satu saja).</p>
             </div>
             <a href="{{ route('subsidies.index') }}" class="btn btn-primary d-flex align-items-center gap-2">
                 <i class="ti ti-settings fs-5"></i> Kelola Program Subsidi
@@ -45,33 +45,33 @@
                         @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="nik" class="form-label fw-medium text-dark">NIK Penerima (16 digit)</label>
+                        <label for="nik" class="form-label fw-medium text-dark">NIK Penerima (16 digit) <span class="text-muted small fw-normal">(Isi salah satu)</span></label>
                         <input type="text" name="nik" id="nik" class="form-control @error('nik') is-invalid @enderror"
-                            placeholder="Masukkan NIK 16 digit" value="{{ old('nik', $nik ?? '') }}"
-                            maxlength="16" inputmode="numeric" autocomplete="off" required>
+                            placeholder="Masukkan NIK atau kosongkan jika isi KK" value="{{ old('nik', $nik ?? '') }}"
+                            maxlength="16" inputmode="numeric" autocomplete="off">
                         @error('nik')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="no_kk" class="form-label fw-medium text-dark">Nomor KK (16 digit)</label>
+                        <label for="no_kk" class="form-label fw-medium text-dark">Nomor KK (16 digit) <span class="text-muted small fw-normal">(Isi salah satu)</span></label>
                         <input type="text" name="no_kk" id="no_kk" class="form-control @error('no_kk') is-invalid @enderror"
-                            placeholder="Masukkan KK 16 digit" value="{{ old('no_kk', $no_kk ?? '') }}"
-                            maxlength="16" inputmode="numeric" autocomplete="off" required>
+                            placeholder="Masukkan KK atau kosongkan jika isi NIK" value="{{ old('no_kk', $no_kk ?? '') }}"
+                            maxlength="16" inputmode="numeric" autocomplete="off">
                         @error('no_kk')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="col-12 d-grid mt-3">
                         <button type="submit" class="btn btn-primary btn-action">
-                            <i class="ti ti-search me-2"></i> Periksa Kelayakan Kuota KK
+                            <i class="ti ti-search me-2"></i> Periksa Kelayakan Penerima
                         </button>
                     </div>
                 </div>
             </form>
 
             {{-- Hasil Pengecekan --}}
-            @if ($nik && $no_kk && $subsidy_id && $selectedProgram)
+            @if (($nik || $no_kk) && $subsidy_id && $selectedProgram)
                 <div class="mt-4 border-top pt-4">
                     @if ($checkStatus === 'claimed_nik')
                         <div class="alert alert-danger rounded-4 d-flex align-items-start mb-0 p-3" role="alert">
@@ -98,7 +98,15 @@
                             <i class="ti ti-circle-check fs-3 me-3 mt-1 text-success"></i>
                             <div>
                                 <h6 class="fw-bold mb-1">Kuota Tersedia (Berhak Menerima)</h6>
-                                <p class="mb-0 small">NIK <strong>{{ $nik }}</strong> dan Nomor KK <strong>{{ $no_kk }}</strong> belum pernah terdaftar di program <strong>{{ $selectedProgram->nama }}</strong>. Kuota keluarga masih tersedia.</p>
+                                <p class="mb-0 small">
+                                    @if ($nik && $no_kk)
+                                        NIK <strong>{{ $nik }}</strong> dan Nomor KK <strong>{{ $no_kk }}</strong> belum pernah terdaftar di program <strong>{{ $selectedProgram->nama }}</strong>. Kuota keluarga masih tersedia.
+                                    @elseif ($nik)
+                                        NIK <strong>{{ $nik }}</strong> belum pernah terdaftar di program <strong>{{ $selectedProgram->nama }}</strong>. Kuota masih tersedia.
+                                    @else
+                                        Nomor KK <strong>{{ $no_kk }}</strong> belum pernah terdaftar di program <strong>{{ $selectedProgram->nama }}</strong>. Kuota keluarga masih tersedia.
+                                    @endif
+                                </p>
                                 <span class="badge bg-success mt-2">Berhak Menerima</span>
                             </div>
                         </div>
@@ -109,8 +117,6 @@
                             <form action="{{ route('subsidychecks.store') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="subsidy_id" value="{{ $subsidy_id }}">
-                                <input type="hidden" name="nik" value="{{ $nik }}">
-                                <input type="hidden" name="no_kk" value="{{ $no_kk }}">
 
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -121,6 +127,33 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
+
+                                    @if ($nik)
+                                        <input type="hidden" name="nik" value="{{ $nik }}">
+                                    @else
+                                        <div class="col-md-6">
+                                            <label for="claim_nik" class="form-label fw-medium text-dark">NIK Penerima (16 digit)</label>
+                                            <input type="text" name="nik" id="claim_nik" class="form-control @error('nik') is-invalid @enderror"
+                                                placeholder="Masukkan NIK 16 digit" value="{{ old('nik') }}" maxlength="16" inputmode="numeric" autocomplete="off">
+                                            @error('nik')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    @endif
+
+                                    @if ($no_kk)
+                                        <input type="hidden" name="no_kk" value="{{ $no_kk }}">
+                                    @else
+                                        <div class="col-md-6">
+                                            <label for="claim_no_kk" class="form-label fw-medium text-dark">Nomor KK (16 digit)</label>
+                                            <input type="text" name="no_kk" id="claim_no_kk" class="form-control @error('no_kk') is-invalid @enderror"
+                                                placeholder="Masukkan KK 16 digit" value="{{ old('no_kk') }}" maxlength="16" inputmode="numeric" autocomplete="off">
+                                            @error('no_kk')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    @endif
+
                                     <div class="col-md-6">
                                         <label for="claim_keterangan" class="form-label fw-medium text-dark">Keterangan Tambahan (opsional)</label>
                                         <input type="text" name="keterangan" id="claim_keterangan" class="form-control"

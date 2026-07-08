@@ -13,11 +13,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Clear existing data (except users) to prevent duplication
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        \App\Models\Category::truncate();
+        \App\Models\Member::truncate();
+        \App\Models\Supervisor::truncate();
+        \App\Models\Officer::truncate();
+        \App\Models\Inventory::truncate();
+        \App\Models\IncomingLetter::truncate();
+        \App\Models\OutgoingLetter::truncate();
+        \App\Models\SubsidyCheck::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
-    $this->call([
-        UserSeeder::class,
-        SubsidyCheckSeeder::class,
-    ]);
+        $this->call([
+            CategorySeeder::class,
+            MemberSeeder::class,
+            SupervisorSeeder::class,
+            OfficerSeeder::class,
+            InventorySeeder::class,
+            IncomingLetterSeeder::class,
+            OutgoingLetterSeeder::class,
+            SubsidyCheckSeeder::class,
+        ]);
     }
 }

@@ -29,16 +29,22 @@ class SubsidyCheckController extends Controller
             $selectedProgram = SubsidyCheck::whereNull('parent_id')->find($subsidy_id);
         }
 
-        if ($nik && $no_kk && $subsidy_id) {
+        if (($nik || $no_kk) && $subsidy_id) {
             // 1. Cek apakah NIK ini sudah claim program ini
-            $claimByNik = SubsidyCheck::where('parent_id', $subsidy_id)
-                ->where('nik', $nik)
-                ->first();
+            $claimByNik = null;
+            if ($nik) {
+                $claimByNik = SubsidyCheck::where('parent_id', $subsidy_id)
+                    ->where('nik', $nik)
+                    ->first();
+            }
 
             // 2. Cek apakah KK ini sudah claim program ini
-            $claimByKk = SubsidyCheck::where('parent_id', $subsidy_id)
-                ->where('no_kk', $no_kk)
-                ->first();
+            $claimByKk = null;
+            if ($no_kk) {
+                $claimByKk = SubsidyCheck::where('parent_id', $subsidy_id)
+                    ->where('no_kk', $no_kk)
+                    ->first();
+            }
 
             if ($claimByNik) {
                 $checkStatus = 'claimed_nik';
@@ -62,17 +68,24 @@ class SubsidyCheckController extends Controller
      */
     public function check(Request $request)
     {
+        if ($request->has('nik') && trim((string)$request->nik) === '') {
+            $request->merge(['nik' => null]);
+        }
+        if ($request->has('no_kk') && trim((string)$request->no_kk) === '') {
+            $request->merge(['no_kk' => null]);
+        }
+
         $request->validate([
             'subsidy_id' => 'required|exists:subsidy_checks,id',
-            'nik' => 'required|string|size:16|regex:/^[0-9]+$/',
-            'no_kk' => 'required|string|size:16|regex:/^[0-9]+$/',
+            'nik' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:no_kk',
+            'no_kk' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:nik',
         ], [
             'subsidy_id.required' => 'Program subsidi wajib dipilih.',
             'subsidy_id.exists' => 'Program subsidi tidak valid.',
-            'nik.required' => 'NIK wajib diisi.',
+            'nik.required_without' => 'NIK atau Nomor KK wajib diisi salah satunya.',
             'nik.size' => 'NIK harus 16 digit.',
             'nik.regex' => 'NIK hanya boleh berisi angka.',
-            'no_kk.required' => 'Nomor KK wajib diisi.',
+            'no_kk.required_without' => 'Nomor KK atau NIK wajib diisi salah satunya.',
             'no_kk.size' => 'Nomor KK harus 16 digit.',
             'no_kk.regex' => 'Nomor KK hanya boleh berisi angka.',
         ]);
@@ -89,35 +102,48 @@ class SubsidyCheckController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('nik') && trim((string)$request->nik) === '') {
+            $request->merge(['nik' => null]);
+        }
+        if ($request->has('no_kk') && trim((string)$request->no_kk) === '') {
+            $request->merge(['no_kk' => null]);
+        }
+
         $request->validate([
             'subsidy_id' => 'required|exists:subsidy_checks,id',
-            'nik' => 'required|string|size:16|regex:/^[0-9]+$/',
-            'no_kk' => 'required|string|size:16|regex:/^[0-9]+$/',
+            'nik' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:no_kk',
+            'no_kk' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:nik',
             'nama' => 'required|string|max:255',
             'keterangan' => 'nullable|string',
         ], [
             'subsidy_id.required' => 'Program subsidi wajib dipilih.',
-            'nik.required' => 'NIK wajib diisi.',
+            'nik.required_without' => 'NIK atau Nomor KK wajib diisi salah satunya.',
             'nik.size' => 'NIK harus 16 digit.',
             'nik.regex' => 'NIK hanya boleh berisi angka.',
-            'no_kk.required' => 'Nomor KK wajib diisi.',
+            'no_kk.required_without' => 'Nomor KK atau NIK wajib diisi salah satunya.',
             'no_kk.size' => 'Nomor KK harus 16 digit.',
             'no_kk.regex' => 'Nomor KK hanya boleh berisi angka.',
             'nama.required' => 'Nama penerima wajib diisi.',
         ]);
 
         // Cek lagi rules: 1 KK hanya boleh 1 penerima per program subsidi
-        $claimByNik = SubsidyCheck::where('parent_id', $request->subsidy_id)
-            ->where('nik', $request->nik)
-            ->first();
+        $claimByNik = null;
+        if ($request->filled('nik')) {
+            $claimByNik = SubsidyCheck::where('parent_id', $request->subsidy_id)
+                ->where('nik', $request->nik)
+                ->first();
+        }
 
         if ($claimByNik) {
             return redirect()->back()->withInput()->with('error', 'Penerima dengan NIK ini sudah pernah mengklaim subsidi ini.');
         }
 
-        $claimByKk = SubsidyCheck::where('parent_id', $request->subsidy_id)
-            ->where('no_kk', $request->no_kk)
-            ->first();
+        $claimByKk = null;
+        if ($request->filled('no_kk')) {
+            $claimByKk = SubsidyCheck::where('parent_id', $request->subsidy_id)
+                ->where('no_kk', $request->no_kk)
+                ->first();
+        }
 
         if ($claimByKk) {
             return redirect()->back()->withInput()->with('error', 'Nomor KK ini sudah menerima subsidi ini atas nama ' . $claimByKk->nama . ' (Kuota KK habis).');

@@ -12,21 +12,100 @@ class SubsidyCheckSeeder extends Seeder
      */
     public function run(): void
     {
-        $data = [
-            ['nik' => '3515012345670001', 'nama' => 'Ahmad Subekti',    'keterangan' => 'Subsidi pupuk'],
-            ['nik' => '3515012345670002', 'nama' => 'Siti Aminah',      'keterangan' => 'Subsidi pupuk'],
-            ['nik' => '3515012345670003', 'nama' => 'Budi Santoso',     'keterangan' => 'Subsidi beras'],
-            ['nik' => '3515012345670004', 'nama' => 'Dewi Lestari',     'keterangan' => 'Subsidi pupuk'],
-            ['nik' => '3515012345670005', 'nama' => 'Eko Prasetyo',     'keterangan' => 'Subsidi beras'],
-            ['nik' => '3515012345670006', 'nama' => 'Fatimah Zahra',    'keterangan' => 'Subsidi gas LPG'],
-            ['nik' => '3515012345670007', 'nama' => 'Gunawan Wibowo',   'keterangan' => 'Subsidi pupuk'],
-            ['nik' => '3515012345670008', 'nama' => 'Hana Pertiwi',     'keterangan' => 'Subsidi beras'],
-            ['nik' => '3515012345670009', 'nama' => 'Irfan Hakim',      'keterangan' => 'Subsidi gas LPG'],
-            ['nik' => '3515012345670010', 'nama' => 'Joko Widodo',      'keterangan' => 'Subsidi pupuk'],
+        // Remove existing to start fresh
+        SubsidyCheck::truncate();
+
+        // 1. Seed program utama
+        $programs = [
+            [
+                'nama' => 'Subsidi Pupuk Pertanian',
+                'tahun' => '2026',
+                'periode' => 'Tahap 1',
+                'keterangan' => 'Program bantuan subsidi pupuk urea dan NPK untuk petani Desa Sranak.',
+            ],
+            [
+                'nama' => 'Bantuan Pangan Beras Desa',
+                'tahun' => '2026',
+                'periode' => 'Januari - Maret',
+                'keterangan' => 'Program bantuan pangan beras bulanan untuk warga pra-sejahtera.',
+            ],
+            [
+                'nama' => 'Subsidi Tabung Gas LPG 3 KG',
+                'tahun' => '2026',
+                'periode' => 'Kuartal 1',
+                'keterangan' => 'Program subsidi dan pemantauan distribusi gas melon tepat sasaran.',
+            ]
         ];
 
-        foreach ($data as $item) {
-            SubsidyCheck::create($item);
+        $prog1 = SubsidyCheck::create($programs[0]);
+        $prog2 = SubsidyCheck::create($programs[1]);
+        $prog3 = SubsidyCheck::create($programs[2]);
+
+        // 2. Seed penerima / klaim di bawah program
+        $claims = [
+            // Penerima Pupuk
+            [
+                'parent_id' => $prog1->id,
+                'nik' => '3515012345670001',
+                'no_kk' => '3515019876540001',
+                'nama' => 'Ahmad Subekti',
+                'tahun' => '2026',
+                'periode' => 'Tahap 1',
+                'keterangan' => 'Lolos verifikasi kelompok tani - Telah disalurkan pupuk NPK 50kg.',
+            ],
+            [
+                'parent_id' => $prog1->id,
+                'nik' => '3515012345670002',
+                'no_kk' => '3515019876540002',
+                'nama' => 'Siti Aminah',
+                'tahun' => '2026',
+                'periode' => 'Tahap 1',
+                'keterangan' => 'Lolos verifikasi kelompok tani - Telah disalurkan urea 50kg.',
+            ],
+            [
+                'parent_id' => $prog1->id,
+                'nik' => '3515012345670003',
+                'no_kk' => '3515019876540003',
+                'nama' => 'Budi Santoso',
+                'tahun' => '2026',
+                'periode' => 'Tahap 1',
+                'keterangan' => 'Lolos verifikasi - Pupuk Urea 100kg.',
+            ],
+
+            // Penerima Beras
+            [
+                'parent_id' => $prog2->id,
+                'nik' => '3515012345670004',
+                'no_kk' => '3515019876540004',
+                'nama' => 'Dewi Lestari',
+                'tahun' => '2026',
+                'periode' => 'Januari - Maret',
+                'keterangan' => 'Penerima manfaat beras 10kg.',
+            ],
+            [
+                'parent_id' => $prog2->id,
+                'nik' => '3515012345670005',
+                'no_kk' => '3515019876540005',
+                'nama' => 'Eko Prasetyo',
+                'tahun' => '2026',
+                'periode' => 'Januari - Maret',
+                'keterangan' => 'Penerima manfaat beras 10kg.',
+            ],
+
+            // Penerima LPG
+            [
+                'parent_id' => $prog3->id,
+                'nik' => '3515012345670006',
+                'no_kk' => '3515019876540006',
+                'nama' => 'Fatimah Zahra',
+                'tahun' => '2026',
+                'periode' => 'Kuartal 1',
+                'keterangan' => 'Kuota 3 tabung per bulan.',
+            ],
+        ];
+
+        foreach ($claims as $claim) {
+            SubsidyCheck::create($claim);
         }
     }
 }

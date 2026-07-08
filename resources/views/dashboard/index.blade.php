@@ -2,6 +2,18 @@
     {{-- Page Title --}}
     <x-page-title>Dashboard</x-page-title>
 
+    @push('styles')
+        <style>
+            .card-hover-effect {
+                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            }
+            .card-hover-effect:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
+            }
+        </style>
+    @endpush
+
     {{-- tampilkan pesan selamat datang --}}
     <div class="bg-white rounded-4 shadow-sm p-4 mb-5">
         <div class="row align-items-center justify-content-between">
@@ -125,6 +137,38 @@
                 </div>
             </div>
         </div>
+        <div class="col-6 col-lg-3">
+            <a href="{{ route('subsidychecks.index') }}" class="text-decoration-none text-dark">
+                <div class="bg-white rounded-4 shadow-sm p-3 h-100 card-hover-effect">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1"><small>Program Subsidi</small></p>
+                            <h4 class="fw-bold mb-0 text-success">{{ $summaryCounts['subsidy_programs'] }}</h4>
+                        </div>
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success"
+                            style="width: 42px; height: 42px;">
+                            <i class="ti ti-list-details"></i>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-3">
+            <a href="{{ route('subsidychecks.index') }}" class="text-decoration-none text-dark">
+                <div class="bg-white rounded-4 shadow-sm p-3 h-100 card-hover-effect">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-muted mb-1"><small>Penerima Subsidi</small></p>
+                            <h4 class="fw-bold mb-0 text-indigo" style="color: #6610f2 !important;">{{ $summaryCounts['subsidy_claims'] }}</h4>
+                        </div>
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-indigo-subtle text-indigo"
+                            style="width: 42px; height: 42px; background-color: #e0cffc; color: #6610f2;">
+                            <i class="ti ti-discount-check"></i>
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     {{-- infografis --}}
@@ -201,6 +245,8 @@
                 'Surat Masuk',
                 'Surat Keluar',
                 'Kategori',
+                'Prog. Subsidi',
+                'Penerima Subs.',
             ];
             const summaryData = [
                 {{ $summaryCounts['members'] }},
@@ -210,6 +256,8 @@
                 {{ $summaryCounts['incoming_letters'] }},
                 {{ $summaryCounts['outgoing_letters'] }},
                 {{ $summaryCounts['categories'] }},
+                {{ $summaryCounts['subsidy_programs'] }},
+                {{ $summaryCounts['subsidy_claims'] }},
             ];
 
             const memberCategoryLabels = @json($memberCategoryLabels);

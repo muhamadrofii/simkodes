@@ -44,3 +44,4 @@ yarn-error.log
 !/public/officer_files/.gitkeep
 !/public/supervisor_files/
 !/public/supervisor_files/.gitkeep
+/scratch/

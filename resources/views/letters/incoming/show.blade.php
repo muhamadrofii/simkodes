@@ -27,22 +27,25 @@
             <div class="col-md-6">
                 <label class="form-label fw-semibold">Attached File</label>
                 @if ($letter->file)
+                    @php
+                        $extension = pathinfo($letter->file, PATHINFO_EXTENSION);
+                        $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                    @endphp
                     <div class="border rounded p-3 bg-light d-flex align-items-center justify-content-between">
                         <a href="{{ asset('incoming_letters/' . $letter->file) }}" target="_blank"
-                            class="text-decoration-none">
+                            class="text-decoration-none fw-semibold text-dark d-flex align-items-center">
+                            @if ($isImage)
+                                <i class="ti ti-photo fs-4 text-success me-2"></i>
+                            @elseif ($extension && strtolower($extension) === 'pdf')
+                                <i class="ti ti-file-type-pdf fs-4 text-danger me-2"></i>
+                            @else
+                                <i class="ti ti-file-text fs-4 text-primary me-2"></i>
+                            @endif
                             {{ basename($letter->file) }}
                         </a>
-                        @php
-                            $extension = pathinfo($letter->file, PATHINFO_EXTENSION);
-                            $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                        @endphp
-                        @if ($isImage)
-                            <i class="ti ti-photo fs-5 text-success"></i>
-                        @elseif ($extension && strtolower($extension) === 'pdf')
-                            <i class="ti ti-file-type-pdf fs-5 text-danger"></i>
-                        @else
-                            <i class="ti ti-file-text fs-5 text-primary"></i>
-                        @endif
+                        <a href="{{ asset('incoming_letters/' . $letter->file) }}" target="_blank" class="btn btn-primary btn-sm rounded-3 px-3">
+                            <i class="ti ti-eye me-1"></i> Lihat File
+                        </a>
                     </div>
                 @else
                     <div class="form-control bg-light">No file uploaded.</div>
@@ -76,14 +79,14 @@
             </h5>
 
             <div class="rounded-3 border overflow-hidden bg-light d-flex justify-content-center align-items-center"
-                style="min-height: 400px;">
+                style="min-height: 300px; padding: 20px;">
                 @php
                     $extension = pathinfo($letter->file, PATHINFO_EXTENSION);
                     $filePath = asset('incoming_letters/' . $letter->file);
                 @endphp
 
                 @if (in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                    <img src="{{ $filePath }}" alt="{{ $letter->title }}" class="img-fluid" style="max-height: 800px;">
+                    <img src="{{ $filePath }}" alt="{{ $letter->title }}" class="img-fluid rounded border shadow-sm" style="max-height: 350px; max-width: 100%; object-fit: contain;">
                 @elseif (strtolower($extension) === 'pdf')
                     <iframe src="{{ $filePath }}" width="100%" height="800px" style="border: none;"></iframe>
                 @else

@@ -128,6 +128,7 @@ class MemberController extends Controller
 
     public function printKTA($id)
     {
+        ini_set('memory_limit', '256M');
         $member = Member::findOrFail($id);
 
         // Helper: resolve path yang aman untuk lokal & hosting
@@ -139,6 +140,12 @@ class MemberController extends Controller
             }
             return $path;
         };
+
+        // Encode Background
+        $bgKtaPath = $resolvePath('images/kopmerah.png');
+        $bgKta = file_exists($bgKtaPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($bgKtaPath))
+            : '';
 
         // Encode Logos
         $logoMerahPath = $resolvePath('images/kopmerah.png');
@@ -160,10 +167,13 @@ class MemberController extends Controller
             $photoType = pathinfo($photoPath, PATHINFO_EXTENSION);
             $photoBase64 = 'data:image/' . $photoType . ';base64,' . $photoData;
         } else {
-            $photoBase64 = null;
+            $defaultAvatarPath = $resolvePath('images/default-avatar.png');
+            $photoBase64 = file_exists($defaultAvatarPath)
+                ? 'data:image/png;base64,' . base64_encode(file_get_contents($defaultAvatarPath))
+                : null;
         }
 
-        $pdf = Pdf::loadView('members.kta', compact('member', 'logoMerah', 'logoSim', 'photoBase64'))
+        $pdf = Pdf::loadView('members.kta', compact('member', 'logoMerah', 'logoSim', 'photoBase64', 'bgKta'))
             ->setPaper('a5', 'landscape')
             ->setOptions(['isRemoteEnabled' => true, 'isHtml5ParserEnabled' => true]);
 
