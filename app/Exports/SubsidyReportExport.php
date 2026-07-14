@@ -64,7 +64,8 @@ class SubsidyReportExport implements FromCollection, WithHeadings, WithMapping, 
             'Tahun',
             'Periode',
             'Keterangan',
-            'Tanggal Klaim'
+            'Tanggal Ambil',
+            'Status'
         ];
     }
 
@@ -80,7 +81,8 @@ class SubsidyReportExport implements FromCollection, WithHeadings, WithMapping, 
             $claim->program->tahun ?? '-',
             $claim->program->periode ?? '-',
             $claim->keterangan ?? '-',
-            $claim->created_at ? $claim->created_at->format('d/m/Y H:i') : '-'
+            !empty($claim->periode) ? \Carbon\Carbon::parse($claim->periode)->format('d/m/Y H:i') : '-',
+            !empty($claim->periode) ? 'Sudah Diklaim' : 'Belum Diklaim'
         ];
     }
 

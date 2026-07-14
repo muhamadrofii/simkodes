@@ -469,3 +469,21 @@ body {
         font-size: 1.6rem;
     }
 }
+
+/* Custom mobile navbar collapse & hero padding fixes to avoid overlapping */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        background: rgba(0, 31, 63, 0.98);
+        backdrop-filter: blur(12px);
+        margin-top: 15px;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    .hero-section .row {
+        padding-top: 120px !important;
+        padding-bottom: 60px !important;
+    }
+}

@@ -106,12 +106,18 @@
                                 <span class="text-muted small">{{ $claim->keterangan ?? '-' }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="text-muted small">{{ $claim->created_at ? $claim->created_at->format('d/m/Y H:i') : '-' }}</span>
+                                <span class="text-muted small">{{ !empty($claim->periode) ? \Carbon\Carbon::parse($claim->periode)->format('d/m/Y H:i') : '-' }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-success-subtle text-success border px-2 py-1 rounded-3 small d-inline-flex align-items-center gap-1">
-                                    <i class="ti ti-circle-check fs-6"></i> Sudah Diklaim
-                                </span>
+                                @if (!empty($claim->periode))
+                                    <span class="badge bg-success-subtle text-success border px-2 py-1 rounded-3 small d-inline-flex align-items-center gap-1">
+                                        <i class="ti ti-circle-check fs-6"></i> Sudah Diklaim
+                                    </span>
+                                @else
+                                    <span class="badge bg-warning-subtle text-warning border px-2 py-1 rounded-3 small d-inline-flex align-items-center gap-1">
+                                        <i class="ti ti-clock fs-6"></i> Belum Diklaim
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-center">
                                 {{-- Trigger Delete --}}

@@ -44,9 +44,8 @@
                     <li class="nav-item"><a class="nav-link" href="#tentang">Tentang</a></li>
                     <li class="nav-item"><a class="nav-link" href="#kontak">Kontak</a></li>
                 </ul>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm px-3">Masuk</a>
-                    <a href="{{ route('register') }}" class="btn btn-accent btn-sm px-3">Daftar</a>
+                <div class="d-flex">
+                    <a href="{{ route('login') }}" class="btn btn-accent btn-sm px-4">Masuk</a>
                 </div>
             </div>
         </div>

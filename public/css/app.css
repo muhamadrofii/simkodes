@@ -379,16 +379,37 @@ body {
     }
 }
 
-/* On mobile (width < 768px): sidebar is hidden by default and slides in on toggle */
+/* On mobile (width < 768px): sidebar is hidden by default and slides up from the bottom */
 @media (max-width: 767.98px) {
     .sidebar-new {
-        transform: translateX(-100%);
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 75vh !important;
+        border-top-left-radius: 24px !important;
+        border-top-right-radius: 24px !important;
+        transform: translateY(100%);
+        visibility: hidden; /* Hide completely from layout and interaction by default */
         display: flex !important;
         z-index: 1050;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar-new::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        background-color: rgba(255, 255, 255, 0.25);
+        border-radius: 2px;
+        margin: 10px auto 0;
+        flex-shrink: 0;
     }
     
     body.sidebar-toggled .sidebar-new {
-        transform: translateX(0);
+        visibility: visible;
+        transform: translateY(0);
     }
     
     /* Overlay background when sidebar is active on mobile */
@@ -400,18 +421,21 @@ body {
         right: 0;
         bottom: 0;
         background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(4px);
         z-index: 1040;
+    }
+
+    /* Hide bottom navbar when mobile sidebar is open */
+    body.sidebar-toggled .bottom-navbar {
+        transform: translateY(100%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
     }
 }
 
 /* Hide old sidebar class */
 .sidebar { display: none; }
-
-/* Responsive: hide sidebar on mobile */
-@media (max-width: 767.98px) {
-    .sidebar-new { display: none; }
-}
 
 /* ===== BOTTOM NAVBAR (Mobile) ===== */
 .bottom-navbar {
@@ -423,6 +447,7 @@ body {
     z-index: 1200;
     background: linear-gradient(135deg, #001f3f, #00152c);
     border-top: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .bottom-navbar-menu {
@@ -1062,4 +1087,37 @@ th {
     .p-lg-4-2 {
         padding: 2rem !important;
     }
+}
+
+/* Hamburger Icon Animation */
+.hamburger-icon {
+    width: 20px;
+    height: 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.hamburger-icon span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: #34364a;
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Transform to X when sidebar is toggled */
+body.sidebar-toggled .hamburger-icon span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+body.sidebar-toggled .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+}
+
+body.sidebar-toggled .hamburger-icon span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
 }

@@ -11,19 +11,18 @@ echo "================================="
 cd core
 
 echo "[1/6] Pull repository..."
-git fetch --all
-git reset --hard origin/master
+# git pull
 
-echo "[2/6] Install composer..."
-composer install --no-dev --optimize-autoloader
+# echo "[2/6] Install composer..."
+# composer install --no-dev --optimize-autoloader
 
-echo "[3/6] Clear cache..."
-php artisan optimize:clear
+# echo "[3/6] Clear cache..."
+# php artisan optimize:clear
 
-echo "[4/6] Build cache..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+# echo "[4/6] Build cache..."
+# php artisan config:cache
+# php artisan route:cache
+# php artisan view:cache
 
 cd ..
 

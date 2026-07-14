@@ -3,7 +3,11 @@
     <div class="header-left d-flex align-items-center gap-3">
         {{-- Sidebar Toggle Button --}}
         <button type="button" class="btn border-0 p-2 bg-light rounded-3 text-dark d-flex align-items-center justify-content-center sidebar-toggle-btn" id="sidebarToggle" style="width: 38px; height: 38px; transition: background-color 0.2s;">
-            <i class="ti ti-menu-2 fs-4"></i>
+            <div class="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </button>
         <div>
             <h4 class="header-title mb-0">{{ $slot }}</h4>

@@ -105,9 +105,10 @@
                 <th>Nama Lengkap</th>
                 <th>Program Subsidi</th>
                 <th width="50">Tahun</th>
-                <th width="100">Periode</th>
+                <th width="80">Periode</th>
                 <th>Keterangan</th>
-                <th width="100">Tanggal Klaim</th>
+                <th width="100">Tanggal Ambil</th>
+                <th width="80">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -124,7 +125,8 @@
                     <td class="text-center">{{ $claim->program->tahun ?? '-' }}</td>
                     <td>{{ $claim->program->periode ?? '-' }}</td>
                     <td>{{ $claim->keterangan ?? '-' }}</td>
-                    <td class="text-center">{{ $claim->created_at ? $claim->created_at->format('d/m/Y H:i') : '-' }}</td>
+                    <td class="text-center">{{ !empty($claim->periode) ? \Carbon\Carbon::parse($claim->periode)->format('d/m/Y H:i') : '-' }}</td>
+                    <td class="text-center">{{ !empty($claim->periode) ? 'Sudah Diklaim' : 'Belum Diklaim' }}</td>
                 </tr>
             @empty
                 <tr>

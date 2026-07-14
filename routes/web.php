@@ -26,6 +26,7 @@ Route::get('/', function () {
     return view('landing');
 });
 
+
 // Login
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);

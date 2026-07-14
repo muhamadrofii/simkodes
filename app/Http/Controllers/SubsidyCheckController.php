@@ -20,7 +20,7 @@ class SubsidyCheckController extends Controller
         $nik = $request->query('nik');
         $no_kk = $request->query('no_kk');
         $subsidy_id = $request->query('subsidy_id');
-        $checkStatus = null; // 'empty', 'claimed_nik', 'claimed_kk', 'ready'
+        $checkStatus = null; // 'empty', 'not_found', 'ready', 'claimed'
 
         $programs = SubsidyCheck::whereNull('parent_id')->get();
         $selectedProgram = null;
@@ -30,30 +30,28 @@ class SubsidyCheckController extends Controller
         }
 
         if (($nik || $no_kk) && $subsidy_id) {
-            // 1. Cek apakah NIK ini sudah claim program ini
-            $claimByNik = null;
+            // Cari data penerima di database berdasarkan NIK atau KK untuk program ini
+            $recipient = null;
             if ($nik) {
-                $claimByNik = SubsidyCheck::where('parent_id', $subsidy_id)
+                $recipient = SubsidyCheck::where('parent_id', $subsidy_id)
                     ->where('nik', $nik)
                     ->first();
             }
-
-            // 2. Cek apakah KK ini sudah claim program ini
-            $claimByKk = null;
-            if ($no_kk) {
-                $claimByKk = SubsidyCheck::where('parent_id', $subsidy_id)
+            if (!$recipient && $no_kk) {
+                $recipient = SubsidyCheck::where('parent_id', $subsidy_id)
                     ->where('no_kk', $no_kk)
                     ->first();
             }
 
-            if ($claimByNik) {
-                $checkStatus = 'claimed_nik';
-                $result = $claimByNik;
-            } elseif ($claimByKk) {
-                $checkStatus = 'claimed_kk';
-                $result = $claimByKk;
+            if ($recipient) {
+                $result = $recipient;
+                if (!empty($recipient->periode)) {
+                    $checkStatus = 'claimed';
+                } else {
+                    $checkStatus = 'ready';
+                }
             } else {
-                $checkStatus = 'ready';
+                $checkStatus = 'not_found';
             }
         }
 
@@ -102,63 +100,28 @@ class SubsidyCheckController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->has('nik') && trim((string)$request->nik) === '') {
-            $request->merge(['nik' => null]);
-        }
-        if ($request->has('no_kk') && trim((string)$request->no_kk) === '') {
-            $request->merge(['no_kk' => null]);
-        }
-
         $request->validate([
-            'subsidy_id' => 'required|exists:subsidy_checks,id',
-            'nik' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:no_kk',
-            'no_kk' => 'nullable|string|size:16|regex:/^[0-9]+$/|required_without:nik',
-            'nama' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+            'id' => 'required|exists:subsidy_checks,id',
         ], [
-            'subsidy_id.required' => 'Program subsidi wajib dipilih.',
-            'nik.required_without' => 'NIK atau Nomor KK wajib diisi salah satunya.',
-            'nik.size' => 'NIK harus 16 digit.',
-            'nik.regex' => 'NIK hanya boleh berisi angka.',
-            'no_kk.required_without' => 'Nomor KK atau NIK wajib diisi salah satunya.',
-            'no_kk.size' => 'Nomor KK harus 16 digit.',
-            'no_kk.regex' => 'Nomor KK hanya boleh berisi angka.',
-            'nama.required' => 'Nama penerima wajib diisi.',
+            'id.required' => 'ID penerima tidak valid.',
+            'id.exists' => 'Data penerima tidak terdaftar.',
         ]);
 
-        // Cek lagi rules: 1 KK hanya boleh 1 penerima per program subsidi
-        $claimByNik = null;
-        if ($request->filled('nik')) {
-            $claimByNik = SubsidyCheck::where('parent_id', $request->subsidy_id)
-                ->where('nik', $request->nik)
-                ->first();
+        $recipient = SubsidyCheck::findOrFail($request->id);
+
+        if (!empty($recipient->periode)) {
+            return redirect()->back()->with('error', 'Bantuan untuk penerima ini sudah pernah diklaim sebelumnya.');
         }
 
-        if ($claimByNik) {
-            return redirect()->back()->withInput()->with('error', 'Penerima dengan NIK ini sudah pernah mengklaim subsidi ini.');
-        }
-
-        $claimByKk = null;
-        if ($request->filled('no_kk')) {
-            $claimByKk = SubsidyCheck::where('parent_id', $request->subsidy_id)
-                ->where('no_kk', $request->no_kk)
-                ->first();
-        }
-
-        if ($claimByKk) {
-            return redirect()->back()->withInput()->with('error', 'Nomor KK ini sudah menerima subsidi ini atas nama ' . $claimByKk->nama . ' (Kuota KK habis).');
-        }
-
-        SubsidyCheck::create([
-            'parent_id' => $request->subsidy_id,
-            'nik' => $request->nik,
-            'no_kk' => $request->no_kk,
-            'nama' => $request->nama,
-            'keterangan' => $request->keterangan,
+        $recipient->update([
+            'periode' => now()->toDateTimeString(),
         ]);
 
-        return redirect()->route('subsidychecks.index', ['subsidy_id' => $request->subsidy_id])
-            ->with('success', 'Data penerima subsidi berhasil ditambahkan.');
+        return redirect()->route('subsidychecks.index', [
+            'subsidy_id' => $recipient->parent_id,
+            'nik' => $recipient->nik,
+            'no_kk' => $recipient->no_kk
+        ])->with('success', 'Bantuan subsidi berhasil diklaim / diserahkan.');
     }
 
     /**

@@ -197,7 +197,6 @@ class MemberController extends Controller
 
     public function update(Request $request, $id): RedirectResponse
     {
-
         $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'nama' => 'required|string|max:255',
@@ -209,51 +208,32 @@ class MemberController extends Controller
             'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
-
-
         $member = Member::findOrFail($id);
+        
+        $data = [
+            'category_id' => $request->category_id,
+            'nama' => $request->nama,
+            'nik' => $request->nik,
+            'tanggal_masuk' => $request->tanggal_masuk,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'tempat_tinggal' => $request->tempat_tinggal,
+            'mata_pencaharian' => $request->mata_pencaharian,
+        ];
 
         // handle foto profil
         if ($request->hasFile('image')) {
             $filePath = public_path('member_files/' . $member->image);
 
-            if (File::exists($filePath)) {
+            if ($member->image && File::exists($filePath)) {
                 File::delete($filePath);
             }
+            
             $filename = $request->file('image')->hashName();
             $request->file('image')->move(public_path('member_files'), $filename);
-
-            // if ($member->profile_picture && Storage::disk('public')->exists('public/members/'.$member->profile_picture)) {
-            //     Storage::disk('public')->delete('members/'.$member->profile_picture);
-            // }
-
-            // $request->file('profile_picture')->storeAs('members', $filename, 'public');
-
-            $request->image = $filename;
-
-            $member->update([
-                'category_id' => $request->category_id,
-                'nama' => $request->nama,
-                'nik' => $request->nik,
-                'tanggal_masuk' => $request->tanggal_masuk,
-                'jenis_kelamin' => $request->jenis_kelamin == 'Male' ? 'L' : 'P',
-                'tempat_tinggal' => $request->tempat_tinggal,
-                'mata_pencaharian' => $request->mata_pencaharian,
-                'image' => $request->image,
-            ]);
-        } else {
-            $member->update([
-                'category_id' => $request->category_id,
-                'nama' => $request->nama,
-                'nik' => $request->nik,
-                'tanggal_masuk' => $request->tanggal_masuk,
-                'jenis_kelamin' => $request->jenis_kelamin == 'Male' ? 'L' : 'P',
-                'tempat_tinggal' => $request->tempat_tinggal,
-                'mata_pencaharian' => $request->mata_pencaharian
-            ]);
+            $data['image'] = $filename;
         }
 
-
+        $member->update($data);
 
         return redirect()
             ->route('members.show', $member->id)

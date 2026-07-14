@@ -24,9 +24,12 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 
-<body class="bg-light">
+<body class="d-flex align-items-center justify-content-center min-vh-100 position-relative" style="background: linear-gradient(135deg, #001f3f 0%, #00152c 50%, #000c1d 100%); overflow-x: hidden;">
+    {{-- Glowing background circles --}}
+    <div class="position-absolute rounded-circle opacity-10" style="width: 400px; height: 400px; top: -100px; left: -100px; background: #0d6efd; filter: blur(80px); pointer-events: none; z-index: 1;"></div>
+    <div class="position-absolute rounded-circle opacity-10" style="width: 300px; height: 300px; bottom: -50px; right: -50px; background: #f0a500; filter: blur(60px); pointer-events: none; z-index: 1;"></div>
 
-    <main class="container my-5">
+    <main class="w-100 py-4 px-3 position-relative" style="max-width: 500px; z-index: 10;">
         {{ $slot }}
     </main>
 

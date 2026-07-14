@@ -105,6 +105,7 @@ class SubsidyCheckSeeder extends Seeder
         ];
 
         foreach ($claims as $claim) {
+            $claim['periode'] = now()->toDateTimeString();
             SubsidyCheck::create($claim);
         }
     }
