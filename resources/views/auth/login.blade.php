@@ -1,10 +1,9 @@
 <x-layouts.guest>
-    <div class="bg-white rounded-4 shadow-lg p-4 p-md-5 text-center border-0 card-login" style="max-width: 450px; margin: auto;">
+    <div class="bg-white rounded-4 shadow-lg p-3 p-sm-4 p-md-5 text-center border-0 card-login w-100" style="max-width: 450px; margin: auto;">
 
         {{-- Logo dengan background biru dongker & bayangan --}}
         <div class="d-inline-flex align-items-center justify-content-center mb-4 logo-container shadow-sm">
-            <img src="{{ asset('images/logokop.svg') }}" alt="Logo Koperasi" class="logo-zoom"
-                style="width: 140px; height: 140px; object-fit: contain; transition: transform 0.4s ease;">
+            <img src="{{ asset('images/logokop.svg') }}" alt="Logo Koperasi" class="logo-zoom">
         </div>
 
         <h4 class="mb-1 text-dark fw-bold">Masuk ke SIMKODES</h4>
@@ -64,17 +63,37 @@
         }
 
         .logo-container {
-            width: 160px;
-            height: 160px;
+            width: 120px;
+            height: 120px;
             background: linear-gradient(135deg, #001f3f, #003366);
-            border-radius: 32px;
+            border-radius: 24px;
             overflow: hidden;
-            border: 4px solid #fff;
+            border: 3px solid #fff;
             box-shadow: 0 10px 25px rgba(0, 31, 63, 0.15) !important;
+        }
+
+        .logo-zoom {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .logo-zoom:hover {
             transform: scale(1.08);
+        }
+
+        @media (min-width: 576px) {
+            .logo-container {
+                width: 160px;
+                height: 160px;
+                border-radius: 32px;
+                border-width: 4px;
+            }
+            .logo-zoom {
+                width: 140px;
+                height: 140px;
+            }
         }
 
         /* Modern Custom Inputs */
@@ -99,6 +118,7 @@
             display: flex;
             align-items: center;
             transition: color 0.3s ease;
+            flex-shrink: 0;
         }
 
         .custom-input-group:focus-within .input-icon {
@@ -110,7 +130,8 @@
             background: transparent !important;
             box-shadow: none !important;
             outline: none !important;
-            width: 100%;
+            flex-grow: 1;
+            min-width: 0;
             padding: 10px 0;
             color: #1e293b;
             font-size: 0.95rem;
@@ -130,6 +151,7 @@
             display: flex;
             align-items: center;
             transition: color 0.3s ease;
+            flex-shrink: 0;
         }
 
         .btn-toggle-password:hover {
