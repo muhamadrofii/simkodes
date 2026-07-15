@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
         \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         $this->call([
+            UserSeeder::class,
             CategorySeeder::class,
             MemberSeeder::class,
             SupervisorSeeder::class,
