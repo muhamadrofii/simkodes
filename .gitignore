@@ -37,8 +37,10 @@ yarn-error.log
 !/public/category_images/dummy_category.png
 !/public/incoming_letters/
 !/public/incoming_letters/.gitkeep
+!/public/incoming_letters/dummy_surat.png
 !/public/outgoing_letters/
 !/public/outgoing_letters/.gitkeep
+!/public/outgoing_letters/dummy_surat.png
 !/public/member_files/
 !/public/member_files/.gitkeep
 !/public/member_files/dummy_photo.png
