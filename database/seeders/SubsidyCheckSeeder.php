@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\SubsidyCheck;
+use App\Models\Member;
 use Illuminate\Database\Seeder;
 
 class SubsidyCheckSeeder extends Seeder
@@ -15,7 +16,7 @@ class SubsidyCheckSeeder extends Seeder
         // Remove existing to start fresh
         SubsidyCheck::truncate();
 
-        // 1. Seed program utama
+        // 1. Seed 5 program utama
         $programs = [
             [
                 'nama' => 'Subsidi Pupuk Pertanian',
@@ -34,79 +35,84 @@ class SubsidyCheckSeeder extends Seeder
                 'tahun' => '2026',
                 'periode' => 'Kuartal 1',
                 'keterangan' => 'Program subsidi dan pemantauan distribusi gas melon tepat sasaran.',
+            ],
+            [
+                'nama' => 'Bantuan Bibit Tanaman & Benih',
+                'tahun' => '2026',
+                'periode' => 'Tahap 1',
+                'keterangan' => 'Penyaluran bibit padi unggul dan jagung hibrida untuk kelompok tani.',
+            ],
+            [
+                'nama' => 'Subsidi Listrik & Energi Desa',
+                'tahun' => '2026',
+                'periode' => 'Tahun Anggaran 2026',
+                'keterangan' => 'Program subsidi tagihan listrik untuk fasilitas sosial, tempat ibadah, dan warga kurang mampu.',
             ]
         ];
 
-        $prog1 = SubsidyCheck::create($programs[0]);
-        $prog2 = SubsidyCheck::create($programs[1]);
-        $prog3 = SubsidyCheck::create($programs[2]);
+        $createdPrograms = [];
+        foreach ($programs as $prog) {
+            $createdPrograms[] = SubsidyCheck::create($prog);
+        }
+
+        // Get members to link as recipients
+        $members = Member::all();
+
+        // Fallback dummy members if database has no members
+        if ($members->isEmpty()) {
+            $dummyNames = ['Ahmad Subekti', 'Siti Aminah', 'Budi Santoso', 'Dewi Lestari', 'Eko Prasetyo', 'Fatimah Zahra', 'Joko Susilo', 'Lilik Mulyani', 'Rina Kartika', 'Haji Mansur'];
+        } else {
+            $dummyNames = $members->pluck('nama')->toArray();
+        }
 
         // 2. Seed penerima / klaim di bawah program
-        $claims = [
-            // Penerima Pupuk
-            [
-                'parent_id' => $prog1->id,
-                'nik' => '3515012345670001',
-                'no_kk' => '3515019876540001',
-                'nama' => 'Ahmad Subekti',
-                'tahun' => '2026',
-                'periode' => 'Tahap 1',
-                'keterangan' => 'Lolos verifikasi kelompok tani - Telah disalurkan pupuk NPK 50kg.',
-            ],
-            [
-                'parent_id' => $prog1->id,
-                'nik' => '3515012345670002',
-                'no_kk' => '3515019876540002',
-                'nama' => 'Siti Aminah',
-                'tahun' => '2026',
-                'periode' => 'Tahap 1',
-                'keterangan' => 'Lolos verifikasi kelompok tani - Telah disalurkan urea 50kg.',
-            ],
-            [
-                'parent_id' => $prog1->id,
-                'nik' => '3515012345670003',
-                'no_kk' => '3515019876540003',
-                'nama' => 'Budi Santoso',
-                'tahun' => '2026',
-                'periode' => 'Tahap 1',
-                'keterangan' => 'Lolos verifikasi - Pupuk Urea 100kg.',
-            ],
+        $nikBase = 3515012345670001;
+        $kkBase  = 3515019876540001;
 
-            // Penerima Beras
-            [
-                'parent_id' => $prog2->id,
-                'nik' => '3515012345670004',
-                'no_kk' => '3515019876540004',
-                'nama' => 'Dewi Lestari',
-                'tahun' => '2026',
-                'periode' => 'Januari - Maret',
-                'keterangan' => 'Penerima manfaat beras 10kg.',
-            ],
-            [
-                'parent_id' => $prog2->id,
-                'nik' => '3515012345670005',
-                'no_kk' => '3515019876540005',
-                'nama' => 'Eko Prasetyo',
-                'tahun' => '2026',
-                'periode' => 'Januari - Maret',
-                'keterangan' => 'Penerima manfaat beras 10kg.',
-            ],
+        foreach ($createdPrograms as $index => $program) {
+            // Each program gets 4-6 recipients
+            $numRecipients = rand(4, 6);
+            
+            // Shuffle names to distribute randomly
+            $programNames = $dummyNames;
+            shuffle($programNames);
+            
+            // Limit to list size
+            $selectedNames = array_slice($programNames, 0, min($numRecipients, count($programNames)));
 
-            // Penerima LPG
-            [
-                'parent_id' => $prog3->id,
-                'nik' => '3515012345670006',
-                'no_kk' => '3515019876540006',
-                'nama' => 'Fatimah Zahra',
-                'tahun' => '2026',
-                'periode' => 'Kuartal 1',
-                'keterangan' => 'Kuota 3 tabung per bulan.',
-            ],
-        ];
+            foreach ($selectedNames as $k => $name) {
+                $nik = (string)($nikBase + ($index * 10) + $k);
+                $kk = (string)($kkBase + ($index * 10) + $k);
+                
+                $keteranganDetail = "";
+                switch ($index) {
+                    case 0:
+                        $keteranganDetail = "Lolos verifikasi kelompok tani - Penyaluran pupuk Urea/NPK disetujui.";
+                        break;
+                    case 1:
+                        $keteranganDetail = "Penerima manfaat beras 10kg - Tersalurkan.";
+                        break;
+                    case 2:
+                        $keteranganDetail = "Pemberian kuota 3 tabung gas melon bersubsidi per bulan.";
+                        break;
+                    case 3:
+                        $keteranganDetail = "Bantuan bibit padi unggul sebanyak 10 kg untuk musim tanam.";
+                        break;
+                    case 4:
+                        $keteranganDetail = "Penerima subsidi pemotongan biaya tagihan listrik bulanan.";
+                        break;
+                }
 
-        foreach ($claims as $claim) {
-            $claim['periode'] = now()->toDateTimeString();
-            SubsidyCheck::create($claim);
+                SubsidyCheck::create([
+                    'parent_id' => $program->id,
+                    'nik' => $nik,
+                    'no_kk' => $kk,
+                    'nama' => $name,
+                    'tahun' => $program->tahun,
+                    'periode' => now()->toDateTimeString(),
+                    'keterangan' => $keteranganDetail,
+                ]);
+            }
         }
     }
 }
