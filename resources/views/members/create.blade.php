@@ -4,7 +4,7 @@
 
     <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
         {{-- form add data --}}
-        <form action="{{ route('members.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('members.store') }}" method="POST" enctype="multipart/form-data" data-turbo="false">
             @csrf
 
             <div class="row">

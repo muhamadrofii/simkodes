@@ -4,7 +4,7 @@
 
     <div class="bg-white rounded-4 shadow-sm p-4 mb-4">
         {{-- form edit data --}}
-        <form action="{{ route('officers.update', $officer->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('officers.update', $officer->id) }}" method="POST" enctype="multipart/form-data" data-turbo="false">
             @csrf
             @method('PUT')
             <div class="row">
