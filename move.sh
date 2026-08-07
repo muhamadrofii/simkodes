@@ -31,6 +31,12 @@ echo "[5/6] Copy public assets..."
 cp -rf core/public/css . 2>/dev/null || true
 cp -rf core/public/js . 2>/dev/null || true
 cp -rf core/public/images . 2>/dev/null || true
+cp -rf core/public/member_files . 2>/dev/null || true
+cp -rf core/public/officer_files . 2>/dev/null || true
+cp -rf core/public/supervisor_files . 2>/dev/null || true
+cp -rf core/public/category_images . 2>/dev/null || true
+cp -rf core/public/incoming_letters . 2>/dev/null || true
+cp -rf core/public/outgoing_letters . 2>/dev/null || true
 
 cp -f core/public/favicon.ico . 2>/dev/null || true
 cp -f core/public/robots.txt . 2>/dev/null || true
