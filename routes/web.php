@@ -152,3 +152,13 @@ Route::middleware(['auth'])->group(function () {
 
     }); // end CheckSessionTimeout middleware
 }); // end auth middleware
+
+Route::get('/check-error-log', function() {
+    $logPath = storage_path('logs/laravel.log');
+    if (!file_exists($logPath)) {
+        return "Log file not found.";
+    }
+    $content = file_get_contents($logPath);
+    $content = substr($content, -20000);
+    return '<pre>' . htmlspecialchars($content) . '</pre>';
+});
