@@ -42,13 +42,17 @@ cp -f core/public/favicon.ico . 2>/dev/null || true
 cp -f core/public/robots.txt . 2>/dev/null || true
 cp -f core/public/index.php .
 
-echo "[6/6] Fix index.php path..."
+echo "[6/7] Fix index.php path..."
 
 sed -i "s|../storage/framework/maintenance.php|core/storage/framework/maintenance.php|g" index.php
 
 sed -i "s|../vendor/autoload.php|core/vendor/autoload.php|g" index.php
 
 sed -i "s|../bootstrap/app.php|core/bootstrap/app.php|g" index.php
+
+echo "[7/7] Set write permissions..."
+chmod -R 775 member_files officer_files supervisor_files category_images incoming_letters outgoing_letters 2>/dev/null || true
+chmod -R 777 member_files officer_files supervisor_files category_images incoming_letters outgoing_letters 2>/dev/null || true
 
 echo "================================="
 echo "DEPLOYMENT SUCCESS"

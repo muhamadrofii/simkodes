@@ -35,7 +35,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->string('nama');
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->integer('umur')->nullable();
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->string('jabatan')->nullable();
@@ -53,7 +53,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->string('nama');
-            $table->string('image');
+            $table->string('image')->nullable();
             $table->integer('umur')->nullable();
             $table->enum('jenis_kelamin', ['L', 'P']);
             $table->string('mata_pencaharian')->nullable();
