@@ -155,7 +155,7 @@
     <div class="sb-bottom">
         <div class="sb-bottom-card">
             <i class="ti ti-school"></i>
-            <span>PKM — UNUGIRI 2025</span>
+            <span>PKM — UNUGIRI {{ date('Y') }}</span>
         </div>
     </div>
 </aside>

@@ -50,7 +50,7 @@
             </button>
 
             <p class="text-center text-muted mt-5 mb-0" style="font-size: 11px; letter-spacing: 0.5px;">
-                PKM — <strong>UNUGIRI 2025</strong>
+                PKM — <strong>UNUGIRI {{ date('Y') }}</strong>
             </p>
         </form>
     </div>
