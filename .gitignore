@@ -51,3 +51,6 @@ yarn-error.log
 !/public/supervisor_files/.gitkeep
 !/public/supervisor_files/dummy_photo.png
 /scratch/
+/_archive/
+_archive/
+

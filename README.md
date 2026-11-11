@@ -20,7 +20,35 @@ SIMKODES adalah aplikasi web untuk pengelolaan data koperasi. Fokus utamanya mel
 - Composer
 - Database server
 
-## Instalasi Lokal
+## Instalasi & Menjalankan dengan Docker (Rekomendasi)
+
+1. **Salin environment Docker:**
+   ```bash
+   cp .env.docker.example .env
+   # Pada Windows PowerShell:
+   # copy .env.docker.example .env
+   ```
+
+2. **Build dan jalankan container:**
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Install dependency dan inisialisasi Laravel:**
+   ```bash
+   docker compose exec app composer install
+   docker compose exec app php artisan key:generate
+   docker compose exec app php artisan migrate --seed
+   docker compose exec app php artisan storage:link
+   ```
+
+4. **Akses Aplikasi:**
+   - **Aplikasi Web SIMKODES**: [http://localhost:8000](http://localhost:8000)
+   - **Database phpMyAdmin**: [http://localhost:8080](http://localhost:8080) (Server: `db`, User: `simkodes_user`, Password: `simkodes_password`)
+
+---
+
+## Instalasi Lokal (Tanpa Docker)
 1. Install dependency PHP
    ```bash
    composer install
@@ -44,9 +72,13 @@ SIMKODES adalah aplikasi web untuk pengelolaan data koperasi. Fokus utamanya mel
    ```
 
 ## Perintah Berguna
-- Jalankan test
+- Jalankan test (di dalam Docker)
   ```bash
-  php artisan test
+  docker compose exec app php artisan test
+  ```
+- Jalankan artisan di dalam container
+  ```bash
+  docker compose exec app php artisan <command>
   ```
 
 ## Catatan Deploy (cPanel)

@@ -1,0 +1,41 @@
+# Dependency & Build Artifacts
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Composer
+vendor/
+composer.phar
+
+# Environment & Config
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE & OS Files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Storage & Cache (leave empty dirs structure if needed)
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*.log
+
+# Project Documentation & Assets
+*.pdf
+*.pptx
+*.zip
+screenshots_frontend/
+scratch/
