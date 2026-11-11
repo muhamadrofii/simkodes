@@ -1,8 +1,14 @@
-Options +SymLinksIfOwnerMatch
-RewriteEngine On
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks -Indexes
+    RewriteEngine On
 
-# Allow Installatron requests
-RewriteCond %{REQUEST_FILENAME} deleteme\.\w+\.php
-RewriteRule (.*) - [L] 
+    # Blokir akses langsung ke file sensitif
+    <FilesMatch "^\.env|composer\.(json|lock)|package(-lock)?\.json">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
 
-RewriteRule ^ index.php [L]
+    # Arahkan semua request ke folder public/
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
