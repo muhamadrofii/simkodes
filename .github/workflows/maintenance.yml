@@ -1,0 +1,76 @@
+name: System Maintenance Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Pilih Environment Target'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+      action:
+        description: 'Aksi Mode Maintenance'
+        required: true
+        type: choice
+        options:
+          - 'down (Aktifkan Maintenance Mode)'
+          - 'up (Sistem Kembali Online)'
+        default: 'down (Aktifkan Maintenance Mode)'
+      secret:
+        description: 'Bypass Token Secret (akses via https://domain/?secret=TOKEN)'
+        required: false
+        default: 'simkodes-secret-bypass'
+      retry_after:
+        description: 'Retry-After Header (dalam detik)'
+        required: false
+        default: '3600'
+
+jobs:
+  maintenance-control:
+    name: Toggle Maintenance Mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 1. Setup SSH Key untuk Hostinger
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.HOSTINGER_SSH_PORT }} -H "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: 2. Eksekusi Perintah Maintenance di Server
+        run: |
+          TARGET="${{ github.event.inputs.target }}"
+          ACTION="${{ github.event.inputs.action }}"
+          SECRET="${{ github.event.inputs.secret }}"
+          RETRY="${{ github.event.inputs.retry_after }}"
+
+          if [ "$TARGET" = "staging" ]; then
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+          else
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+          fi
+
+          echo "Mengatur maintenance mode untuk $TARGET di path $APP_PATH..."
+
+          if [[ "$ACTION" == down* ]]; then
+            echo "Mengaktifkan Maintenance Mode (php artisan down)..."
+            ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} << EOF
+              cd $APP_PATH
+              php artisan down --secret="$SECRET" --retry="$RETRY" || php artisan down
+          EOF
+            echo "Mode Maintenance AKTIF untuk $TARGET."
+            echo "Bypass URL: https://${TARGET == 'staging' && 'simkodes-staging.sranak.com' || 'simkodes.sranak.com'}/?secret=$SECRET"
+          else
+            echo "Menonaktifkan Maintenance Mode (php artisan up)..."
+            ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} << EOF
+              cd $APP_PATH
+              php artisan up
+          EOF
+            echo "Sistem $TARGET kembali ONLINE."
+          fi
+

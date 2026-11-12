@@ -1,0 +1,55 @@
+name: Security Scanning & Dependency Audit
+
+on:
+  push:
+    branches:
+      - master
+      - staging
+  pull_request:
+    branches:
+      - master
+      - staging
+  schedule:
+    # Berjalan mingguan setiap hari Senin pukul 03:00 UTC (10:00 WIB)
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    name: Dependency Vulnerability Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 2. Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: 3. Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 4. Audit Composer Packages (PHP)
+        run: |
+          echo "Menjalankan audit paket Composer..."
+          composer audit
+
+      - name: 5. Audit NPM Packages (JavaScript/Vite)
+        run: |
+          echo "Menjalankan audit dependensi NPM..."
+          npm audit --audit-level=high
+
+      - name: 6. Catat Ringkasan Keamanan
+        if: always()
+        run: |
+          echo "### 🛡️ Dependency Security Scan Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Composer Audit:** Selesai" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Audit:** Selesai (Threshold: High & Critical)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+

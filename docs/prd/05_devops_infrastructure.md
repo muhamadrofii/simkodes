@@ -58,3 +58,4 @@ Agar Laravel tidak mengalami crash `View path not found` atau `Permission denied
 - `storage/framework/sessions`
 - `storage/logs`
 - `bootstrap/cache`
+

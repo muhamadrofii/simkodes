@@ -29,3 +29,4 @@ Seluruh dokumentasi ini disusun secara terpisah (*modular*) dan terstruktur untu
   - 12 Playwright E2E Headless Browser Tests
 - **Monitoring**: Sentry Laravel SDK terintegrasi di cloud
 - **Keamanan Staging**: HTTP Basic Auth dinamis via GitHub Actions
+

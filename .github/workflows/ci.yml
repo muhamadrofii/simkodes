@@ -1,4 +1,4 @@
-name: Playwright E2E Tests
+name: Continuous Integration (CI)
 
 on:
   push:
@@ -9,11 +9,11 @@ on:
     branches:
       - master
       - staging
-  workflow_dispatch: # Memungkinkan tombol "Run workflow" manual di GitHub Actions
+  workflow_dispatch:
 
 jobs:
-  test-e2e:
-    name: Run Playwright E2E Tests
+  test-suite:
+    name: Run PHPUnit & Playwright E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -50,7 +50,7 @@ jobs:
           php artisan key:generate
           php artisan migrate --seed --force
 
-      - name: 7. Run PHPUnit Feature & Unit Tests
+      - name: 7. Run PHPUnit Feature, Unit & API Tests
         run: php artisan test
 
       - name: 8. Install Playwright Chromium Browser
@@ -61,7 +61,7 @@ jobs:
         env:
           BASE_URL: 'http://127.0.0.1:8000'
 
-      - name: 11. Upload Playwright Test Report (Jika Gagal)
+      - name: 10. Upload Playwright Test Report (Jika Gagal)
         uses: actions/upload-artifact@v4
         if: failure()
         with:

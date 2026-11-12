@@ -56,3 +56,4 @@ Tujuan utama sistem:
 ### G. Modul Laporan Rekapitulasi Umum (Reports)
 - Filter data transaksi dan keanggotaan berdasarkan rentang tanggal fleksibel (`start_date` s/d `end_date`).
 - Halaman cetak laporan rekapitulasi komprehensif.
+

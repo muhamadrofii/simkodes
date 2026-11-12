@@ -17,50 +17,54 @@ Sistem SIMKODES terintegrasi penuh dengan **Sentry Cloud** untuk menangkap crash
 
 ---
 
-## 2. Prosedur Maintenance Mode Terstandarisasi (Graceful 503)
+## 2. Pemantauan Uptime Otomatis ([monitoring.yml](file:///c:/code/sranak/simkodes/.github/workflows/monitoring.yml))
 
-Ketika pengurus atau developer perlu melakukan pembaruan besar pada server Production tanpa memunculkan halaman error 500 kepada publik:
-
-### A. Mengaktifkan Mode Pemeliharaan dengan Secret Bypass
-```bash
-php artisan down --secret="simkodes-secret-bypass" --render="errors::503"
-```
-- **Pengunjung Umum**: Melihat halaman ramah *"Sistem Sedang Dalam Pemeliharaan Berkala"*.
-- **Developer / Tim Administrator**: Tetap dapat mengakses dan menguji aplikasi web secara normal melalui URL bypass khusus:  
-  `https://sranak.com/simkodes-secret-bypass`
-
-### B. Menonaktifkan Mode Pemeliharaan (Live Kembali)
-```bash
-php artisan up
-```
+- **Jadwal Eksekusi**: Berjalan secara terjadwal setiap 6 jam (`cron: '0 */6 * * *'`) atau trigger manual via GitHub Actions.
+- **Endpoint yang Dipantau**:
+  - **Staging**: `https://simkodes-staging.sranak.com` (terautentikasi otomatis via secrets Basic Auth).
+  - **Production**: `https://simkodes.sranak.com`.
+- **Threshold**: Memvalidasi status code HTTP 200–399. Status di luar range tersebut memunculkan warning dan laporan status di GitHub Step Summary.
 
 ---
 
-## 3. Pemeliharaan Rutin Terjadwal (Automated Maintenance)
+## 3. Prosedur Maintenance Mode Terstandarisasi ([maintenance.yml](file:///c:/code/sranak/simkodes/.github/workflows/maintenance.yml))
 
-Untuk menjaga performa database dan filesystem tidak membengkak seiring waktu:
+SIMKODES menyediakan kontrol mode pemeliharaan otomatis melalui GitHub Actions `workflow_dispatch` tanpa perlu login manual ke terminal SSH server:
 
-| Perintah Pemeliharaan | Fungsi & Tujuan | Jadwal Rutin |
-| :--- | :--- | :--- |
-| `php artisan sanctum:prune-expired` | Menghapus token API Sanctum yang sudah kadaluarsa. | Harian (00:00) |
-| `php artisan auth:clear-resets` | Membersihkan token reset password yang kedaluwarsa. | Harian (01:00) |
-| `php artisan log:clear` / Rotasi Harian | Mencegah file `laravel.log` berukuran gigabyte. | Rotasi `daily` (14 hari) |
+### A. Opsi Workflow Maintenance
+- **Target**: Pilihan antara `staging` atau `production`.
+- **Aksi**:
+  - `down`: Mengaktifkan mode pemeliharaan dengan `php artisan down --secret="SECRET" --retry=3600`.
+  - `up`: Menonaktifkan mode pemeliharaan dan membawa aplikasi kembali online dengan `php artisan up`.
+- **Bypass Token**: Memungkinkan developer/pengurus koperasi membuka aplikasi saat maintenance melalui query parameter khusus:
+  `https://simkodes-staging.sranak.com/?secret=simkodes-secret-bypass`
 
 ---
 
-## 4. Rencana Cutover ke Server Production (Go-Live Roadmap)
+## 4. Pencadangan Database Terjadwal ([backup.yml](file:///c:/code/sranak/simkodes/.github/workflows/backup.yml))
 
-Sebelum menimpa versi lama di direktori live `public_html/simkodes/`, lakukan langkah cutover berurutan berikut:
+- **Jadwal Eksekusi**: Otomatis setiap Minggu pukul 02:00 UTC (09:00 WIB) atau dipicu manual.
+- **Mekanisme**:
+  1. SSH ke server Hostinger dan membaca kredensial database langsung dari `.env` aktif.
+  2. Menjalankan `mysqldump --single-transaction --quick | gzip`.
+  3. Mengunduh file `.sql.gz` ke GitHub Actions runner.
+  4. Menyimpan dump ke GitHub Actions Artifacts dengan masa retensi **30 hari**.
 
-1. **Full Backup Database Lama**:
-   - Buka cPanel Hostinger $\rightarrow$ phpMyAdmin $\rightarrow$ Export database lama ke file `.sql` lokal.
-2. **Setup Staging Verification**:
-   - Pastikan seluruh pengujian manual di `https://simkodes-staging.sranak.com` telah dinyatakan siap oleh tim koperasi.
-3. **Penyusunan Workflow `deploy-production.yml`**:
-   - Menggunakan konfigurasi yang serupa dengan staging, diarahkan ke folder live `public_html/simkodes/` tanpa Basic Auth.
-4. **Eksekusi Caching Produksi**:
-   ```bash
-   php artisan optimize
-   ```
+---
+
+## 5. Rencana Cutover ke Server Production (Go-Live Roadmap)
+
+Sebelum menimpa versi lama di direktori live `public_html/simkodes/`, ikuti tahapan cutover berurutan berikut:
+
+1. **Jalankan Workflow Backup Database Lama**:
+   - Picu workflow [backup.yml](file:///c:/code/sranak/simkodes/.github/workflows/backup.yml) untuk mengarsipkan database saat ini.
+2. **Verifikasi Final Staging**:
+   - Pastikan seluruh pengujian manual di `https://simkodes-staging.sranak.com` telah disetujui tim koperasi.
+3. **Audit Keamanan Terakhir**:
+   - Pastikan workflow [security.yml](file:///c:/code/sranak/simkodes/.github/workflows/security.yml) lulus tanpa kerentanan high/critical.
+4. **Trigger Deployment Production Terproteksi**:
+   - Buka GitHub Actions $\rightarrow$ Workflow **Continuous Deployment - Production**.
+   - Masukkan input konfirmasi: `"DEPLOY"`.
+   - Workflow akan mengeksekusi rsync ke direktori live `public_html/simkodes/`, migrasi DB live, dan `php artisan optimize`.
 5. **Verifikasi Pasif Pasca-Rilis**:
-   - Pantau dashboard Sentry Cloud selama 30 menit pertama untuk memastikan tidak ada lonjakan unhandled exception.
+   - Pantau dashboard Sentry Cloud selama 30 menit pertama untuk memastikan zero unhandled exception.

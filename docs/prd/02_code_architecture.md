@@ -124,3 +124,4 @@ Untuk mencegah peringatan static analysis (Intelephense / PHPStan) `Call to unkn
 $data = $query->paginate($limit)->appends($request->query());
 ```
 Method `appends()` terdaftar resmi di interface contract `Illuminate\Contracts\Pagination\Paginator`, menjamin kepatuhan tipe 100% dan menghilangkan error IDE.
+

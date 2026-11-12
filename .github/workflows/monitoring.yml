@@ -1,0 +1,52 @@
+name: Health & Uptime Monitoring
+
+on:
+  schedule:
+    # Berjalan setiap 6 jam
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  uptime-healthcheck:
+    name: Ping & Endpoint Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 1. Periksa Health Staging Environment
+        id: check_staging
+        run: |
+          echo "Pengecekan Staging: https://simkodes-staging.sranak.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "${{ secrets.STAGING_AUTH_USER }}:${{ secrets.STAGING_AUTH_PASS }}" --max-time 15 "https://simkodes-staging.sranak.com" || echo "000")
+          echo "Staging HTTP Response Code: $HTTP_CODE"
+          echo "staging_status=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "Staging Sehat (HTTP $HTTP_CODE)"
+          else
+            echo "::warning::Staging mengembalikan respons $HTTP_CODE"
+          fi
+
+      - name: 2. Periksa Health Live Production Environment
+        id: check_production
+        run: |
+          echo "Pengecekan Live Production: https://simkodes.sranak.com"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "https://simkodes.sranak.com" || echo "000")
+          echo "Production HTTP Response Code: $HTTP_CODE"
+          echo "production_status=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+            echo "Production Sehat (HTTP $HTTP_CODE)"
+          else
+            echo "::warning::Production mengembalikan respons $HTTP_CODE (atau belum dideploy live)"
+          fi
+
+      - name: 3. Laporan Status Uptime
+        if: always()
+        run: |
+          echo "### 🌐 Health Check & Uptime Report" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | URL | HTTP Status | Kondisi |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Staging** | https://simkodes-staging.sranak.com | \`${{ steps.check_staging.outputs.staging_status }}\` | $([ "${{ steps.check_staging.outputs.staging_status }}" -ge 200 ] && echo "🟢 Online" || echo "🔴 Error") |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Production** | https://simkodes.sranak.com | \`${{ steps.check_production.outputs.production_status }}\` | $([ "${{ steps.check_production.outputs.production_status }}" -ge 200 ] && echo "🟢 Online" || echo "🟡 Standby / Unreachable") |" >> $GITHUB_STEP_SUMMARY
+

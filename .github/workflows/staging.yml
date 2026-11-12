@@ -1,0 +1,90 @@
+name: Continuous Deployment - Staging
+
+on:
+  push:
+    branches:
+      - staging
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, fileinfo
+          coverage: none
+
+      - name: 3. Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 4. Install Composer Dependencies (Production)
+        run: composer install --no-dev --no-progress --prefer-dist --optimize-autoloader
+
+      - name: 5. Install NPM Dependencies & Build Assets
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: 6. Inject Dynamic HTTP Basic Auth (Proteksi Staging)
+        run: |
+          mkdir -p public
+          HTPASSWD_HASH=$(openssl passwd -apr1 "${{ secrets.STAGING_AUTH_PASS }}")
+          echo "${{ secrets.STAGING_AUTH_USER }}:${HTPASSWD_HASH}" > public/.htpasswd
+          sed -i "1i AuthType Basic\nAuthName \"Restricted Staging Access\"\nAuthUserFile /home/u849825724/domains/sranak.com/public_html/simkodes-staging/public/.htpasswd\nRequire valid-user\n" public/.htaccess
+
+      - name: 7. Setup SSH Key untuk Hostinger
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.HOSTINGER_SSH_PORT }} -H "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: 8. Rsync Deployment ke Staging Server
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.HOSTINGER_SSH_PORT }}" \
+            --exclude='.env' \
+            --exclude='storage/app/public/' \
+            --exclude='storage/logs/' \
+            --exclude='_archive/' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='e2e/' \
+            ./ ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:/home/u849825724/domains/sranak.com/public_html/simkodes-staging/
+
+      - name: 9. Post-Deployment Commands (Permission, Symlink, & Cache)
+        run: |
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} << 'EOF'
+            cd /home/u849825724/domains/sranak.com/public_html/simkodes-staging
+
+            # Buat direktori esensial & atur permission
+            mkdir -p storage/framework/{views,cache,sessions} storage/logs
+            chmod -R 775 storage bootstrap/cache
+
+            # Bypass batasan symlink Hostinger via shell
+            cd public && ln -sfn ../storage/app/public storage || true
+            cd ..
+
+            # Migrasi database staging & caching
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+          EOF
+

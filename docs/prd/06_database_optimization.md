@@ -71,3 +71,4 @@ $incomingByMonth = IncomingLetter::selectRaw("{$dateFormatSql} as ym, COUNT(*) a
     ->pluck('total', 'ym');
 ```
 Dengan logika di atas, kode berfungsi transparan dan lulus di lingkungan SQLite (CI) maupun MySQL (Server Production).
+

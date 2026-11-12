@@ -1,0 +1,91 @@
+name: Database Backup Automation
+
+on:
+  schedule:
+    # Berjalan secara terjadwal setiap hari Minggu pukul 02:00 UTC (09:00 WIB)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Pilih Environment untuk Backup'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: 'production'
+
+jobs:
+  database-backup:
+    name: Backup Remote MySQL Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 1. Setup SSH Key untuk Hostinger
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.HOSTINGER_SSH_PORT }} -H "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: 2. Eksekusi Dump Database di Server
+        run: |
+          TARGET="${{ github.event.inputs.target || 'production' }}"
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          BACKUP_FILENAME="simkodes_${TARGET}_backup_${TIMESTAMP}.sql.gz"
+
+          if [ "$TARGET" = "staging" ]; then
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+          else
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+          fi
+
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
+          echo "BACKUP_FILENAME=$BACKUP_FILENAME" >> $GITHUB_ENV
+
+          echo "Menjalankan mysqldump untuk $TARGET..."
+
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} << EOF
+            cd $APP_PATH
+
+            # Ekstrak kredensial dari .env
+            DB_DATABASE=\$(grep "^DB_DATABASE=" .env | cut -d '=' -f2 | tr -d '\r"')
+            DB_USERNAME=\$(grep "^DB_USERNAME=" .env | cut -d '=' -f2 | tr -d '\r"')
+            DB_PASSWORD=\$(grep "^DB_PASSWORD=" .env | cut -d '=' -f2 | tr -d '\r"')
+            DB_HOST=\$(grep "^DB_HOST=" .env | cut -d '=' -f2 | tr -d '\r"')
+
+            if [ -z "\$DB_DATABASE" ]; then
+              echo "Error: Kredensial database tidak ditemukan di .env!"
+              exit 1
+            fi
+
+            mkdir -p ~/backups_temp
+            mysqldump --single-transaction --quick -h "\${DB_HOST:-127.0.0.1}" -u "\$DB_USERNAME" -p"\$DB_PASSWORD" "\$DB_DATABASE" | gzip > ~/backups_temp/${BACKUP_FILENAME}
+          EOF
+
+      - name: 3. Unduh File Backup dari Server ke Runner
+        run: |
+          mkdir -p ./backups
+          scp -P ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:~/backups_temp/${{ env.BACKUP_FILENAME }} ./backups/
+
+          # Bersihkan file sementara di server
+          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} "rm -f ~/backups_temp/${{ env.BACKUP_FILENAME }}"
+
+          ls -lh ./backups/
+
+      - name: 4. Upload Backup ke GitHub Artifacts (Retention 30 Hari)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILENAME }}
+          path: ./backups/${{ env.BACKUP_FILENAME }}
+          retention-days: 30
+
+      - name: 5. Ringkasan Backup
+        run: |
+          echo "### 📦 Backup Database Berhasil!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Environment:** ${{ env.TARGET }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Nama File:** \`${{ env.BACKUP_FILENAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ukuran File:** $(du -h ./backups/${{ env.BACKUP_FILENAME }} | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Masa Simpan:** 30 Hari di GitHub Actions Artifacts" >> $GITHUB_STEP_SUMMARY
+
