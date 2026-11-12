@@ -31,3 +31,4 @@ class AuthTest extends DuskTestCase
         });
     }
 }
+

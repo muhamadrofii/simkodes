@@ -17,3 +17,4 @@ class DashboardPage extends Page
                 ->assertSee('Dashboard');
     }
 }
+

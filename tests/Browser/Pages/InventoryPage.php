@@ -17,3 +17,4 @@ class InventoryPage extends Page
                 ->assertSee('Buku Inventaris');
     }
 }
+
