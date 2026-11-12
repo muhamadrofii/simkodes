@@ -11,21 +11,30 @@ Dokumen pelacak tugas, pengujian staging, dan persiapan rilis production untuk t
 - [x] **[CI/CD] Otomatisasi GitHub Actions ke Staging**
   - Membuat workflow `.github/workflows/deploy-staging.yml`.
   - Mengatur build asset Vite dan Composer di cloud GitHub.
-  - Setup rsync SSH ke server Hostinger.
+  - Setup rsync SSH ke server Hostinger dengan bypass PHP `symlink()` via shell `ln -sfn`.
 - [x] **[Security] Proteksi Akses Web Staging (HTTP Basic Auth)**
   - Menambahkan step pembuatan `.htpasswd` otomatis di GitHub Actions via Secret `STAGING_AUTH_USER` & `STAGING_AUTH_PASS`.
   - Mengunci `https://simkodes-staging.sranak.com` agar hanya bisa diakses tim berwenang.
-- [x] **[Testing Automation] Cakupan Pengujian Seluruh Modul (Dusk, Playwright & PHPUnit)**
-  - Menyiapkan Page Object Model (POM) untuk semua halaman SIMKODES.
-  - Menulis 11 Feature Tests (`tests/Feature/SimkodesModuleTest.php`) mencakup Auth, Anggota, Pengurus, Pengawas, Kategori, Surat Masuk/Keluar, Inventaris, Subsidi, dan Laporan.
-  - Menulis 9 Playwright E2E browser tests (`e2e/tests/full-features.spec.ts`).
+- [x] **[Monitoring] Integrasi Sentry Error Monitoring**
+  - Install `sentry/sentry-laravel` dan verifikasi event `SIMKODES-1` di dashboard Sentry Cloud.
+- [x] **[Testing Automation] Cakupan Pengujian Browser E2E & Backend (Dusk, Playwright & PHPUnit)**
+  - Menyiapkan Page Object Model (POM) bersih di Playwright dan Laravel Dusk.
+  - Memisahkan spec E2E Playwright secara modular (`01_auth.spec.ts` s/d `07_reports.spec.ts`, 12 tests PASS).
+  - Memisahkan 10 file Feature Tests PHPUnit per modul (`AuthTest`, `CategoryTest`, `MemberTest`, `OfficerTest`, `SupervisorTest`, `IncomingLetterTest`, `OutgoingLetterTest`, `InventoryTest`, `SubsidyTest`, `ReportTest`, 60 tests PASS).
   - Menyiapkan workflow otomatisasi GitHub Actions (`.github/workflows/e2e.yml`).
-- [x] **[Monitoring] Integrasi Library Sentry Laravel**
-  - Install `sentry/sentry-laravel` dan konfigurasi handler di `bootstrap/app.php` & `config/sentry.php`.
+- [x] **[API & Database] Standarisasi RESTful API & Optimasi Query SQL**
+  - Implementasi Laravel Sanctum Bearer Token Auth (`login`, `logout`, `me`).
+  - Standarisasi JSend Response Envelope via `ApiResponseTrait` (200, 201, 401, 404, 422).
+  - Standarisasi validasi request via Form Requests (`BaseApiRequest`, `LoginRequest`, `StoreMemberRequest`, `UpdateMemberRequest`).
+  - Migrasi penambahan database indexing (`nama`, `tanggal_masuk`, `nama_barang`, `reference_number`).
+  - Eliminasi masalah N+1 query via Eager Loading terproyeksi (`QueryEfficiencyTest`).
+- [x] **[Bugfix & Kompatibilitas]**
+  - Mengganti `withQueryString()` dengan method kontrak resmi `appends($request->query())` di 9 controller (fix warning Intelephense).
+  - Memperbaiki query agregasi tanggal di `DashboardController` agar database-agnostic (fix error 500 SQLite di GitHub Actions CI).
 
 ---
 
-## 2. 🧪 Testing (Staging Environment)
+## 2. 🧪 Testing & QA (Staging Environment)
 *URL Staging: [https://simkodes-staging.sranak.com](https://simkodes-staging.sranak.com)*
 
 - [ ] **[QA] Pengujian Modul Autentikasi & Akun**
@@ -33,8 +42,8 @@ Dokumen pelacak tugas, pengujian staging, dan persiapan rilis production untuk t
   - [ ] Hak akses user (Admin, Pengurus, Pengawas).
 - [ ] **[QA] Pengujian Master Data Anggota & Pengurus**
   - [ ] Tambah, edit, detail, dan hapus data Anggota.
-  - [ ] Cetak KTA Anggota.
-  - [ ] Manajemen data Pengurus & Pengawas.
+  - [ ] Cetak KTA Anggota (PDF).
+  - [ ] Manajemen data Pengurus & Pengawas + Cetak KTA.
 - [ ] **[QA] Pengujian Modul Persuratan & Inventaris**
   - [ ] Upload & download file Surat Masuk.
   - [ ] Upload & download file Surat Keluar.
@@ -46,23 +55,22 @@ Dokumen pelacak tugas, pengujian staging, dan persiapan rilis production untuk t
 
 ---
 
-## 3. 📋 Backlog / To Do (Persiapan Production & Monitoring)
+## 3. 📋 Backlog / To Do (Persiapan Rilis Production & Keamanan yang Dibahas Tadi)
+- [ ] **[Security Scanning] Audit Keamanan Dependencies**
+  - Menjalankan `composer audit` dan `npm audit` untuk mendeteksi kerentanan CVE pada paket dependensi.
 - [ ] **[Monitoring] Pasang UptimeRobot**
-  - Daftarkan URL Staging dan Production ke UptimeRobot (notifikasi otomatis ke Telegram / Email jika down).
-- [ ] **[Monitoring] Integrasi Sentry Laravel**
-  - Install `sentry/sentry-laravel` untuk memantau error 500 secara realtime.
+  - Daftarkan URL Staging dan Production ke UptimeRobot (notifikasi otomatis ke Telegram / Email jika down tanpa login).
 - [ ] **[CI/CD] Buat Workflow Rilis Production (`deploy-production.yml`)**
   - Menyiapkan alur rilis otomatis ke direktori `public_html/simkodes/` saat merge ke `master`.
   - Menjalankan caching produksi (`php artisan optimize`).
 - [ ] **[Database] Backup & Migrasi Production**
-  - Backup database lama yang masih aktif di Hostinger.
+  - Backup database lama yang masih aktif di cPanel Hostinger.
   - Sinkronisasi struktur tabel bersih dari staging ke production.
 - [ ] **[Cutover] Rilis Resmi Versi Bersih ke Production**
-  - Menimpa versi production lama yang masih berantakan dengan versi baru hasil pengujian staging.
+  - Menimpa versi production lama yang masih acak-acakan dengan versi baru hasil pengujian staging.
 
 ---
 
 ## 4. 🚀 Ready for Production (Siap Rilis)
 *(Pindahkan item dari Staging ke sini jika sudah diverifikasi 100% bebas bug oleh tim).*
-- [ ] *Belum ada (menunggu hasil pengujian modul staging selesai).*
-
+- [ ] *Menunggu hasil QA manual di Staging dan eksekusi backlog persiapan production.*
