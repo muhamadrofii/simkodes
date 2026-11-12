@@ -36,6 +36,21 @@ jobs:
           npm install
           npm run build
 
+      - name: 5.5 Setup Staging Password Protection
+        env:
+          AUTH_USER: ${{ secrets.STAGING_AUTH_USER }}
+          AUTH_PASS: ${{ secrets.STAGING_AUTH_PASS }}
+          TARGET_DIR: ${{ secrets.TARGET_STAGING_DIR }}
+        run: |
+          if [ -n "$AUTH_USER" ] && [ -n "$AUTH_PASS" ]; then
+            echo "Membuat proteksi password untuk user: $AUTH_USER"
+            php -r 'echo getenv("AUTH_USER") . ":" . password_hash(getenv("AUTH_PASS"), PASSWORD_BCRYPT) . PHP_EOL;' > .htpasswd
+            
+            CLEAN_DIR="${TARGET_DIR%/}"
+            printf "AuthType Basic\nAuthName \"Akses Khusus Tim SIMKODES\"\nAuthUserFile %s/.htpasswd\nRequire valid-user\n\n" "$CLEAN_DIR" > .htaccess.auth
+            cat .htaccess.auth .htaccess > .htaccess.tmp && mv .htaccess.tmp .htaccess && rm -f .htaccess.auth
+          fi
+
       - name: 6. Deploy to Hostinger via Rsync
         uses: easingthemes/ssh-deploy@main
         with:
