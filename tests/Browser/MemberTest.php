@@ -35,3 +35,4 @@ class MemberTest extends DuskTestCase
         });
     }
 }
+

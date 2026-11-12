@@ -42,3 +42,4 @@ class MemberPage extends Page
         $browser->assertSeeIn('table', $name);
     }
 }
+

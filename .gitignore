@@ -59,4 +59,7 @@ yarn-error.log
 /scratch/
 /_archive/
 _archive/
+/playwright-report/
+/test-results/
+
 

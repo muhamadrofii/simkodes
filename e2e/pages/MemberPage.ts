@@ -52,3 +52,4 @@ export class MemberPage {
     await expect(this.membersTable).toContainText(nama);
   }
 }
+

@@ -45,3 +45,4 @@ export class LoginPage {
     await expect(this.alertError).toBeVisible();
   }
 }
+

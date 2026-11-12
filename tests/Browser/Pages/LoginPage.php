@@ -45,3 +45,4 @@ class LoginPage extends Page
                 ->click('@submit');
     }
 }
+
