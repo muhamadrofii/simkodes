@@ -25,9 +25,21 @@ jobs:
       - name: 1. Setup SSH Key untuk Hostinger
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.HOSTINGER_SSH_PORT }} -H "${{ secrets.HOSTINGER_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          SSH_PORT="${{ secrets.HOSTINGER_SSH_PORT || secrets.SSH_PORT }}"
+          SSH_PORT="${SSH_PORT:-65002}"
+          SSH_HOST="${{ secrets.HOSTINGER_SSH_HOST || secrets.SSH_HOST }}"
+          SSH_HOST="${SSH_HOST:-195.35.48.228}"
+          SSH_USER="${{ secrets.HOSTINGER_SSH_USER || secrets.SSH_USER }}"
+          SSH_USER="${SSH_USER:-u849825724}"
+
+          echo "SSH_PORT=$SSH_PORT" >> $GITHUB_ENV
+          echo "SSH_HOST=$SSH_HOST" >> $GITHUB_ENV
+          echo "SSH_USER=$SSH_USER" >> $GITHUB_ENV
+
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: 2. Eksekusi Dump Database di Server
         run: |
@@ -46,7 +58,7 @@ jobs:
 
           echo "Menjalankan mysqldump untuk $TARGET..."
 
-          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} << EOF
+          ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
             cd $APP_PATH
 
             # Ekstrak kredensial dari .env
@@ -67,10 +79,10 @@ jobs:
       - name: 3. Unduh File Backup dari Server ke Runner
         run: |
           mkdir -p ./backups
-          scp -P ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }}:~/backups_temp/${{ env.BACKUP_FILENAME }} ./backups/
+          scp -P ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:~/backups_temp/${{ env.BACKUP_FILENAME }} ./backups/
 
           # Bersihkan file sementara di server
-          ssh -p ${{ secrets.HOSTINGER_SSH_PORT }} ${{ secrets.HOSTINGER_SSH_USER }}@${{ secrets.HOSTINGER_SSH_HOST }} "rm -f ~/backups_temp/${{ env.BACKUP_FILENAME }}"
+          ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "rm -f ~/backups_temp/${{ env.BACKUP_FILENAME }}"
 
           ls -lh ./backups/
 
