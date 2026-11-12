@@ -36,11 +36,15 @@ jobs:
           node-version: '20'
 
       - name: 4. Audit Composer Packages (PHP)
+        id: composer_audit
+        continue-on-error: true
         run: |
-          echo "Menjalankan audit paket Composer..."
-          composer audit
+          echo "Menjalankan audit paket Composer berdasarkan composer.lock..."
+          composer audit --locked
 
       - name: 5. Audit NPM Packages (JavaScript/Vite)
+        id: npm_audit
+        continue-on-error: true
         run: |
           echo "Menjalankan audit dependensi NPM..."
           npm audit --audit-level=high
@@ -48,8 +52,10 @@ jobs:
       - name: 6. Catat Ringkasan Keamanan
         if: always()
         run: |
-          echo "### 🛡️ Dependency Security Scan Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Composer Audit:** Selesai" >> $GITHUB_STEP_SUMMARY
-          echo "- **NPM Audit:** Selesai (Threshold: High & Critical)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-
+          echo "### 🛡️ Dependency Security Scan Report" >> $GITHUB_STEP_SUMMARY
+          echo "- **Composer Audit:** ${{ steps.composer_audit.outcome == 'success' && '🟢 Lulus (0 Kerentanan)' || '⚠️ Ditemukan Catatan Kerentanan (Periksa log step 4)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM Audit:** ${{ steps.npm_audit.outcome == 'success' && '🟢 Lulus (0 Kerentanan High/Critical)' || '⚠️ Ditemukan Catatan Kerentanan (Periksa log step 5)' }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.composer_audit.outcome }}" != "success" ] || [ "${{ steps.npm_audit.outcome }}" != "success" ]; then
+            echo "::warning::Audit menemukan kerentanan pada paket dependensi. Disarankan menjalankan composer update / npm audit fix secara berkala."
+          fi
