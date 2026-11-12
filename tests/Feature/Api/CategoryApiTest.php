@@ -16,10 +16,19 @@ class CategoryApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet('/api/categories');
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonStructure([
+                     'success',
+                     'code',
+                     'message',
                      'data' => [
                          '*' => ['id', 'name', 'description', 'created_at'],
                      ],
+                     'meta',
+                     'links',
                  ]);
     }
 
@@ -33,6 +42,10 @@ class CategoryApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet("/api/categories/{$cat->id}");
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonPath('data.id', $cat->id)
                  ->assertJsonPath('data.name', $cat->name);
     }

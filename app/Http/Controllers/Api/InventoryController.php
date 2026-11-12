@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\InventoryResource;
 use App\Models\Inventory;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Http\JsonResponse;
 
 class InventoryController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
      * Tampilkan data inventaris dengan indexing nama_barang
      */
-    public function index(): AnonymousResourceCollection
+    public function index(): JsonResponse
     {
         $inventories = Inventory::select([
             'id',
@@ -28,13 +31,13 @@ class InventoryController extends Controller
             'updated_at',
         ])->latest('id')->paginate(15);
 
-        return InventoryResource::collection($inventories);
+        return $this->sendPaginated(InventoryResource::collection($inventories), 'Daftar inventaris berhasil dimuat.');
     }
 
     /**
      * Detail item inventaris
      */
-    public function show(int $id): InventoryResource
+    public function show(int $id): JsonResponse
     {
         $inventory = Inventory::select([
             'id',
@@ -48,8 +51,12 @@ class InventoryController extends Controller
             'keterangan',
             'created_at',
             'updated_at',
-        ])->findOrFail($id);
+        ])->find($id);
 
-        return new InventoryResource($inventory);
+        if (! $inventory) {
+            return $this->sendError('Data inventaris tidak ditemukan.', null, 404);
+        }
+
+        return $this->sendResponse(new InventoryResource($inventory), 'Detail inventaris berhasil dimuat.');
     }
 }

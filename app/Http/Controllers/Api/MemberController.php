@@ -3,20 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreMemberRequest;
+use App\Http\Requests\Api\UpdateMemberRequest;
 use App\Http\Resources\MemberResource;
 use App\Models\Member;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class MemberController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
      * Tampilkan daftar anggota secara efisien (Eager Loading & Column Projection).
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
-        // Query efisien: Hindari N+1 query dengan eager loading terproyeksi
         $query = Member::select([
             'id',
             'category_id',
@@ -42,36 +45,28 @@ class MemberController extends Controller
 
         $members = $query->latest('id')->paginate($request->integer('per_page', 15));
 
-        return MemberResource::collection($members);
+        return $this->sendPaginated(MemberResource::collection($members), 'Daftar anggota berhasil dimuat.');
     }
 
     /**
      * Simpan data anggota baru
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreMemberRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'nama' => 'required|string|max:255',
-            'umur' => 'nullable|integer|min:0',
-            'jenis_kelamin' => 'required|in:L,P',
-            'mata_pencaharian' => 'nullable|string|max:255',
-            'tempat_tinggal' => 'nullable|string|max:255',
-            'tanggal_masuk' => 'nullable|date',
-        ]);
-
-        $member = Member::create($validated);
+        $member = Member::create($request->validated());
         $member->load('category:id,name');
 
-        return (new MemberResource($member))
-            ->response()
-            ->setStatusCode(201);
+        return $this->sendResponse(
+            new MemberResource($member),
+            'Data anggota berhasil ditambahkan.',
+            201
+        );
     }
 
     /**
      * Detail anggota
      */
-    public function show($id): MemberResource
+    public function show($id): JsonResponse
     {
         $resolvedId = $id instanceof Member ? $id->id : $id;
         $member = Member::select([
@@ -86,33 +81,31 @@ class MemberController extends Controller
             'image',
             'created_at',
             'updated_at',
-        ])->with(['category:id,name'])->findOrFail($resolvedId);
+        ])->with(['category:id,name'])->find($resolvedId);
 
-        return new MemberResource($member);
+        if (! $member) {
+            return $this->sendError('Data anggota tidak ditemukan.', null, 404);
+        }
+
+        return $this->sendResponse(new MemberResource($member), 'Detail anggota berhasil dimuat.');
     }
 
     /**
      * Perbarui data anggota
      */
-    public function update(Request $request, $id): MemberResource
+    public function update(UpdateMemberRequest $request, $id): JsonResponse
     {
         $resolvedId = $id instanceof Member ? $id->id : $id;
-        $member = Member::findOrFail($resolvedId);
+        $member = Member::find($resolvedId);
 
-        $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'nama' => 'required|string|max:255',
-            'umur' => 'nullable|integer|min:0',
-            'jenis_kelamin' => 'required|in:L,P',
-            'mata_pencaharian' => 'nullable|string|max:255',
-            'tempat_tinggal' => 'nullable|string|max:255',
-            'tanggal_masuk' => 'nullable|date',
-        ]);
+        if (! $member) {
+            return $this->sendError('Data anggota tidak ditemukan.', null, 404);
+        }
 
-        $member->update($validated);
+        $member->update($request->validated());
         $member->load('category:id,name');
 
-        return new MemberResource($member);
+        return $this->sendResponse(new MemberResource($member), 'Data anggota berhasil diperbarui.');
     }
 
     /**
@@ -121,12 +114,14 @@ class MemberController extends Controller
     public function destroy($id): JsonResponse
     {
         $resolvedId = $id instanceof Member ? $id->id : $id;
-        $member = Member::findOrFail($resolvedId);
+        $member = Member::find($resolvedId);
+
+        if (! $member) {
+            return $this->sendError('Data anggota tidak ditemukan.', null, 404);
+        }
+
         $member->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data anggota berhasil dihapus.',
-        ], 200);
+        return $this->sendResponse(null, 'Data anggota berhasil dihapus.');
     }
 }

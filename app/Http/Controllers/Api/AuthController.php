@@ -3,51 +3,42 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\LoginRequest;
 use App\Models\User;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    use ApiResponseTrait;
+
     /**
      * Otentikasi pengguna dan terbitkan Sanctum Bearer Token
      */
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Email atau password yang Anda masukkan salah.',
-            ], 401);
+            return $this->sendError('Email atau password yang Anda masukkan salah.', null, 401);
         }
 
-        // Hapus token lama untuk keamanan (Single Active Token)
+        // Single active token: hapus token lama
         $user->tokens()->delete();
 
         $token = $user->createToken('simkodes-api-token')->plainTextToken;
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Login berhasil.',
-            'data' => [
-                'token' => $token,
-                'token_type' => 'Bearer',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                ],
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
             ],
-        ], 200);
+        ], 'Login berhasil.', 200);
     }
 
     /**
@@ -55,10 +46,7 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json([
-            'status' => 'success',
-            'data' => $request->user(),
-        ], 200);
+        return $this->sendResponse($request->user(), 'Profil pengguna berhasil dimuat.');
     }
 
     /**
@@ -68,9 +56,6 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Token berhasil dicabut, Anda telah logout.',
-        ], 200);
+        return $this->sendResponse(null, 'Token berhasil dicabut, Anda telah logout.');
     }
 }

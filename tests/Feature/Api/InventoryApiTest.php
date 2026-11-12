@@ -16,10 +16,19 @@ class InventoryApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet('/api/inventories');
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonStructure([
+                     'success',
+                     'code',
+                     'message',
                      'data' => [
                          '*' => ['id', 'nama_barang', 'jumlah', 'harga_satuan', 'jumlah_rupiah', 'created_at'],
                      ],
+                     'meta',
+                     'links',
                  ]);
     }
 
@@ -33,6 +42,10 @@ class InventoryApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet("/api/inventories/{$inv->id}");
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonPath('data.id', $inv->id)
                  ->assertJsonPath('data.nama_barang', $inv->nama_barang);
     }

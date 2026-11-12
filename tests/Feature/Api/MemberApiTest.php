@@ -20,9 +20,9 @@ class MemberApiTest extends ApiTestCase
     }
 
     /**
-     * Memastikan GET /api/members menghasilkan response JSON standar dengan pagination
+     * Memastikan GET /api/members menghasilkan response JSON standar envelope dengan pagination
      */
-    public function test_get_members_list_returns_paginated_json(): void
+    public function test_get_members_list_returns_standard_envelope(): void
     {
         Member::create([
             'category_id' => $this->category->id,
@@ -35,7 +35,14 @@ class MemberApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet('/api/members');
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonStructure([
+                     'success',
+                     'code',
+                     'message',
                      'data' => [
                          '*' => [
                              'id',
@@ -47,32 +54,43 @@ class MemberApiTest extends ApiTestCase
                              'created_at',
                          ],
                      ],
-                     'links',
                      'meta' => [
                          'current_page',
                          'per_page',
                          'total',
+                         'last_page',
+                     ],
+                     'links' => [
+                         'first',
+                         'last',
                      ],
                  ]);
     }
 
     /**
-     * Memastikan validasi input gagal mengembalikan status HTTP 422 Unprocessable Content
+     * Memastikan FormRequest validasi gagal mengembalikan envelope standar 422
      */
-    public function test_store_member_fails_validation_returns_422(): void
+    public function test_store_member_fails_validation_returns_standard_422(): void
     {
         $response = $this->apiAs()->apiPost('/api/members', [
             // Kosong tanpa nama & jenis_kelamin
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['nama', 'jenis_kelamin']);
+                 ->assertJson([
+                     'success' => false,
+                     'code' => 422,
+                     'message' => 'Validasi parameter request gagal.',
+                 ])
+                 ->assertJsonStructure([
+                     'errors' => ['nama', 'jenis_kelamin'],
+                 ]);
     }
 
     /**
-     * Memastikan POST /api/members sukses mengembalikan status HTTP 201 Created
+     * Memastikan POST /api/members sukses mengembalikan envelope standar 201 Created
      */
-    public function test_store_member_success_returns_201(): void
+    public function test_store_member_success_returns_standard_201(): void
     {
         $nama = 'Anggota Baru ' . uniqid();
 
@@ -87,6 +105,11 @@ class MemberApiTest extends ApiTestCase
         ]);
 
         $response->assertStatus(201)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 201,
+                     'message' => 'Data anggota berhasil ditambahkan.',
+                 ])
                  ->assertJsonPath('data.nama', $nama)
                  ->assertJsonPath('data.jenis_kelamin', 'P');
 
@@ -109,12 +132,31 @@ class MemberApiTest extends ApiTestCase
         $response = $this->apiAs()->apiGet("/api/members/{$member->id}");
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonPath('data.id', $member->id)
                  ->assertJsonPath('data.nama', $member->nama);
     }
 
     /**
-     * Memastikan PUT /api/members/{id} memperbarui data dan mengembalikan status 200
+     * Memastikan GET /api/members/{id} jika tidak ditemukan mengembalikan 404 envelope standar
+     */
+    public function test_show_member_not_found_returns_404(): void
+    {
+        $response = $this->apiAs()->apiGet('/api/members/999999');
+
+        $response->assertStatus(404)
+                 ->assertJson([
+                     'success' => false,
+                     'code' => 404,
+                     'message' => 'Data anggota tidak ditemukan.',
+                 ]);
+    }
+
+    /**
+     * Memastikan PUT /api/members/{id} memperbarui data dan mengembalikan envelope 200
      */
     public function test_update_member_success(): void
     {
@@ -137,6 +179,10 @@ class MemberApiTest extends ApiTestCase
         ]);
 
         $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code' => 200,
+                 ])
                  ->assertJsonPath('data.nama', $updatedNama);
 
         $this->assertDatabaseHas('members', ['id' => $member->id, 'nama' => $updatedNama]);
@@ -157,7 +203,8 @@ class MemberApiTest extends ApiTestCase
 
         $response->assertStatus(200)
                  ->assertJson([
-                     'status' => 'success',
+                     'success' => true,
+                     'code' => 200,
                      'message' => 'Data anggota berhasil dihapus.',
                  ]);
 

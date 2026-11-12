@@ -16,6 +16,26 @@ $app = Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 401,
+                    'message' => 'Token otentikasi tidak valid atau belum disertakan (Unauthenticated).',
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 404,
+                    'message' => 'Endpoint atau data yang Anda minta tidak ditemukan.',
+                ], 404);
+            }
+        });
+
         Integration::handles($exceptions);
     })->create();
 

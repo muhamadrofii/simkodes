@@ -5,14 +5,15 @@ namespace Tests\Feature\Api;
 class AuthApiTest extends ApiTestCase
 {
     /**
-     * Memastikan request tanpa Bearer Token ditolak dengan HTTP 401 Unauthorized
+     * Memastikan request tanpa Bearer Token ditolak dengan HTTP 401 dan Response Envelope standar
      */
     public function test_unauthenticated_request_is_rejected(): void
     {
         $response = $this->apiGet('/api/members');
         $response->assertStatus(401)
                  ->assertJson([
-                     'message' => 'Unauthenticated.'
+                     'success' => false,
+                     'code' => 401,
                  ]);
     }
 
@@ -28,7 +29,29 @@ class AuthApiTest extends ApiTestCase
 
         $response->assertStatus(401)
                  ->assertJson([
-                     'status' => 'error',
+                     'success' => false,
+                     'code' => 401,
+                     'message' => 'Email atau password yang Anda masukkan salah.',
+                 ]);
+    }
+
+    /**
+     * Memastikan login gagal validasi jika email kosong (FormRequest 422)
+     */
+    public function test_login_validation_fails_returns_422(): void
+    {
+        $response = $this->apiPost('/api/login', [
+            'email' => 'invalid-email-format',
+            // password kosong
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJson([
+                     'success' => false,
+                     'code' => 422,
+                 ])
+                 ->assertJsonStructure([
+                     'errors' => ['email', 'password'],
                  ]);
     }
 
@@ -44,7 +67,8 @@ class AuthApiTest extends ApiTestCase
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
-                     'status',
+                     'success',
+                     'code',
                      'message',
                      'data' => [
                          'token',
@@ -65,7 +89,8 @@ class AuthApiTest extends ApiTestCase
 
         $response->assertStatus(200)
                  ->assertJson([
-                     'status' => 'success',
+                     'success' => true,
+                     'code' => 200,
                      'data' => [
                          'email' => $this->user->email,
                      ],
@@ -85,7 +110,8 @@ class AuthApiTest extends ApiTestCase
 
         $response->assertStatus(200)
                  ->assertJson([
-                     'status' => 'success',
+                     'success' => true,
+                     'code' => 200,
                      'message' => 'Token berhasil dicabut, Anda telah logout.',
                  ]);
 
