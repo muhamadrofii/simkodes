@@ -12,6 +12,10 @@ jobs:
     name: Deploy to Staging Environment
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || secrets.SSH_PORT || '65002' }}
+      SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST || secrets.SSH_HOST || '195.35.48.228' }}
+      SSH_USER: ${{ secrets.HOSTINGER_SSH_USER || secrets.SSH_USER || 'u849825724' }}
 
     steps:
       - name: 1. Checkout Repository
@@ -50,19 +54,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          SSH_PORT="${{ secrets.HOSTINGER_SSH_PORT || secrets.SSH_PORT }}"
-          SSH_PORT="${SSH_PORT:-65002}"
-          SSH_HOST="${{ secrets.HOSTINGER_SSH_HOST || secrets.SSH_HOST }}"
-          SSH_HOST="${SSH_HOST:-195.35.48.228}"
-          SSH_USER="${{ secrets.HOSTINGER_SSH_USER || secrets.SSH_USER }}"
-          SSH_USER="${SSH_USER:-u849825724}"
-
-          echo "SSH_PORT=$SSH_PORT" >> $GITHUB_ENV
-          echo "SSH_HOST=$SSH_HOST" >> $GITHUB_ENV
-          echo "SSH_USER=$SSH_USER" >> $GITHUB_ENV
-
-          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: 8. Rsync Deployment ke Staging Server
         run: |
