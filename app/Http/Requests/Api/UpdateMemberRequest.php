@@ -17,3 +17,4 @@ class UpdateMemberRequest extends BaseApiRequest
         ];
     }
 }
+

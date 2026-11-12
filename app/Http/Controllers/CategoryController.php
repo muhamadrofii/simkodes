@@ -24,7 +24,7 @@ class CategoryController extends Controller
             $categories = Category::select('id', 'name', 'image')
                 ->where('name', 'like', '%' . request('search') . '%')
                 ->paginate($maxData)
-                ->withQueryString();
+                ->appends(request()->query());
         } else {
             // menampilkan semua data
             $categories = Category::select('id', 'name', 'image')

@@ -22,7 +22,7 @@ class InventoryController extends Controller
                 ->orWhere('keterangan', 'like', "%{$search}%");
         }
 
-        $inventories = $query->paginate(10)->withQueryString();
+        $inventories = $query->paginate(10)->appends($request->query());
 
         return view('inventories.index', compact('inventories'));
     }

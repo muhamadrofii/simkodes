@@ -38,7 +38,7 @@ class ReportController extends Controller
             ->whereBetween('tanggal_masuk', [$startDate, $endDate])
             ->oldest()
             ->paginate(10)
-            ->withQueryString();
+            ->appends($request->query());
 
         // tampilkan data ke view
         return view('report.index', compact('members'));

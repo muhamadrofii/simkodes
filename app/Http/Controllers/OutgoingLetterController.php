@@ -24,7 +24,7 @@ class OutgoingLetterController extends Controller
             });
         }
 
-        $outgoingletters = $query->paginate(12)->withQueryString();
+        $outgoingletters = $query->paginate(12)->appends($request->query());
 
         return view('letters.outgoing.index', compact('outgoingletters'));
     }

@@ -28,7 +28,7 @@ class MemberController extends Controller
             $query->where('nama', 'LIKE', '%' . $search . '%');
         }
 
-        $members = $query->latest()->paginate($maxData)->withQueryString();
+        $members = $query->latest()->paginate($maxData)->appends($request->query());
 
         return view('members.index', compact('members'));
     }

@@ -28,7 +28,7 @@ class SupervisorController extends Controller
             $query->where('nama', 'LIKE', '%' . $search . '%');
         }
 
-        $supervisors = $query->latest()->paginate($maxData)->withQueryString();
+        $supervisors = $query->latest()->paginate($maxData)->appends($request->query());
 
         return view('supervisors.index', compact('supervisors'));
     }

@@ -23,7 +23,7 @@ class IncomingLetterController extends Controller
             });
         }
 
-        $incomingletters = $query->paginate(12)->withQueryString();
+        $incomingletters = $query->paginate(12)->appends($request->query());
 
         return view('letters.incoming.index', compact('incomingletters'));
     }

@@ -156,7 +156,7 @@ class SubsidyCheckController extends Controller
             });
         }
 
-        $subsidies = $query->latest()->paginate(10)->withQueryString();
+        $subsidies = $query->latest()->paginate(10)->appends($request->query());
 
         return view('subsidies.index', compact('subsidies'));
     }
@@ -420,7 +420,7 @@ class SubsidyCheckController extends Controller
             });
         }
 
-        $claims = $query->latest()->paginate(15)->withQueryString();
+        $claims = $query->latest()->paginate(15)->appends($request->query());
 
         return view('subsidies.reports.index', compact('programs', 'claims'));
     }

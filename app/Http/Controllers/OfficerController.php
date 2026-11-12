@@ -28,7 +28,7 @@ class OfficerController extends Controller
             $query->where('nama', 'LIKE', '%' . $search . '%');
         }
 
-        $officers = $query->latest()->paginate($maxData)->withQueryString();
+        $officers = $query->latest()->paginate($maxData)->appends($request->query());
 
         return view('officers.index', compact('officers'));
     }

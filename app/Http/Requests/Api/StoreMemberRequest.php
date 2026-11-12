@@ -27,3 +27,4 @@ class StoreMemberRequest extends BaseApiRequest
         ];
     }
 }
+
