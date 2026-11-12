@@ -15,6 +15,8 @@ Dokumen pelacak tugas, pengujian staging, dan persiapan rilis production untuk t
 - [x] **[Security] Proteksi Akses Web Staging (HTTP Basic Auth)**
   - Menambahkan step pembuatan `.htpasswd` otomatis di GitHub Actions via Secret `STAGING_AUTH_USER` & `STAGING_AUTH_PASS`.
   - Mengunci `https://simkodes-staging.sranak.com` agar hanya bisa diakses tim berwenang.
+- [x] **[Monitoring] Integrasi Library Sentry Laravel**
+  - Install `sentry/sentry-laravel` dan konfigurasi handler di `bootstrap/app.php` & `config/sentry.php`.
 
 ---
 
@@ -58,3 +60,4 @@ Dokumen pelacak tugas, pengujian staging, dan persiapan rilis production untuk t
 ## 4. 🚀 Ready for Production (Siap Rilis)
 *(Pindahkan item dari Staging ke sini jika sudah diverifikasi 100% bebas bug oleh tim).*
 - [ ] *Belum ada (menunggu hasil pengujian modul staging selesai).*
+
