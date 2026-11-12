@@ -19,6 +19,14 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 
+  /* Menjalankan server dev lokal otomatis jika belum berjalan */
+  webServer: {
+    command: 'php artisan serve --port=8000',
+    url: 'http://127.0.0.1:8000/login',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
+
   projects: [
     {
       name: 'chromium',
