@@ -13,6 +13,7 @@ use App\Models\SubsidyCheck;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -61,14 +62,22 @@ class DashboardController extends Controller
             $monthLabels->push($date->format('M Y'));
         }
 
+        // Deteksi database driver agar query kompatibel di MySQL (Hosting/Prod) dan SQLite (CI/Testing)
+        $driver = DB::connection()->getDriverName();
+        $dateFormatSql = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', created_at)",
+            'pgsql' => "to_char(created_at, 'YYYY-MM')",
+            default => "DATE_FORMAT(created_at, '%Y-%m')",
+        };
+
         // gunakan created_at karena tabel surat tidak memiliki kolom received_date
-        $incomingByMonth = IncomingLetter::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
+        $incomingByMonth = IncomingLetter::selectRaw("{$dateFormatSql} as ym, COUNT(*) as total")
             ->whereNotNull('created_at')
             ->where('created_at', '>=', $startMonth->toDateString())
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
-        $outgoingByMonth = OutgoingLetter::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
+        $outgoingByMonth = OutgoingLetter::selectRaw("{$dateFormatSql} as ym, COUNT(*) as total")
             ->whereNotNull('created_at')
             ->where('created_at', '>=', $startMonth->toDateString())
             ->groupBy('ym')
