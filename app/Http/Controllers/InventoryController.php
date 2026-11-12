@@ -75,8 +75,10 @@ class InventoryController extends Controller
     }
 
 
-    public function update(Request $request, Inventory $inventory): RedirectResponse
+    public function update(Request $request, $id): RedirectResponse
     {
+        $inventory = $id instanceof Inventory ? $id : Inventory::findOrFail($id);
+
         $request->validate([
             'nama_barang' => 'required|string|max:255',
             'tanggal' => 'nullable|date',
@@ -106,8 +108,9 @@ class InventoryController extends Controller
         return redirect()->route('inventories.index')->with('success', 'Data inventories berhasil diperbarui!');
     }
 
-    public function destroy(Inventory $inventory): RedirectResponse
+    public function destroy($id): RedirectResponse
     {
+        $inventory = $id instanceof Inventory ? $id : Inventory::findOrFail($id);
         $inventory->delete();
 
         return redirect()->route('inventories.index')->with('success', 'Data inventories berhasil dihapus!');

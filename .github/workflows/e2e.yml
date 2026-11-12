@@ -50,10 +50,8 @@ jobs:
           php artisan key:generate
           php artisan migrate --seed --force
 
-      - name: 7. Start Laravel Server (Background)
-        run: |
-          php artisan serve --host=127.0.0.1 --port=8000 &
-          sleep 3
+      - name: 7. Run PHPUnit Feature & Unit Tests
+        run: php artisan test
 
       - name: 8. Install Playwright Chromium Browser
         run: npx playwright install --with-deps chromium
@@ -63,7 +61,7 @@ jobs:
         env:
           BASE_URL: 'http://127.0.0.1:8000'
 
-      - name: 10. Upload Playwright Test Report (Jika Gagal)
+      - name: 11. Upload Playwright Test Report (Jika Gagal)
         uses: actions/upload-artifact@v4
         if: failure()
         with:
