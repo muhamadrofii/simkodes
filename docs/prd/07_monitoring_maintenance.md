@@ -48,14 +48,17 @@ SIMKODES menyediakan kontrol mode pemeliharaan otomatis melalui GitHub Actions `
   1. SSH ke server Hostinger dan membaca kredensial database langsung dari `.env` aktif.
   2. Menjalankan `mysqldump --single-transaction --quick | gzip`.
   3. Mengunduh file `.sql.gz` ke GitHub Actions runner.
-  4. Menyimpan dump ke GitHub Actions Artifacts dengan masa retensi **30 hari**.
+  4. Menyimpan dump ke GitHub Actions Artifacts via step output resmi (`steps.dump.outputs.filename`) dengan masa retensi **30 hari**.
 
 ---
 
 ## 5. Rencana Cutover ke Server Production (Go-Live Roadmap)
 
-Sebelum menimpa versi lama di direktori live `public_html/simkodes/`, ikuti tahapan cutover berurutan berikut:
+> [!IMPORTANT]
+> **Status Deployment Production: HOLD (DITAHAN).**
+> Deployment live ke production tidak akan pernah berjalan otomatis. Hanya dieksekusi secara manual setelah seluruh pengujian penerimaan pengguna (UAT) di Staging dinyatakan selesai oleh tim koperasi.
 
+Tahapan cutover berurutan ketika sudah siap rilis:
 1. **Jalankan Workflow Backup Database Lama**:
    - Picu workflow [backup.yml](file:///c:/code/sranak/simkodes/.github/workflows/backup.yml) untuk mengarsipkan database saat ini.
 2. **Verifikasi Final Staging**:

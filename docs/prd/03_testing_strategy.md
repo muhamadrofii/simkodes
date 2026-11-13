@@ -81,7 +81,21 @@ Pengujian tidak hanya memvalidasi status HTTP, namun secara aktif mengaudit quer
 
 ---
 
-## 5. Cara Menjalankan Rangkaian Pengujian
+## 5. Matriks Evaluasi 7 Pilar Standar QA Industri
+
+| Pilar Standar QA | Status di SIMKODES | Implementasi & Bukti Verifikasi |
+| :--- | :---: | :--- |
+| **1. Code Quality** | **Lulus** | Standar Clean Code & SRP (Single Responsibility Principle) pada Controllers & FormRequests (`LoginRequest`, `StoreMemberRequest`), kontrak paginasi resmi `appends($request->query())`, dan `ApiResponseTrait` untuk enkapsulasi respons standar JSend. |
+| **2. Unit Testing** | **Lulus (100% Pass)** | Validasi logic backend murni, database driver abstraction (`strftime` vs `DATE_FORMAT`), dan helper model. |
+| **3. Integration Testing** | **Lulus (100% Pass)** | Pengujian siklus hidup Bearer Token Laravel Sanctum, upload/download berkas lampiran disk storage, integrasi error tracking Sentry Cloud (`SIMKODES-1`), dan multi-database connection (SQLite & MySQL). |
+| **4. Functional / Feature Testing** | **Lulus (100% Pass)** | **79 PHPUnit Feature Tests** (10 file fitur CRUD modul koperasi) + **12 Playwright E2E Tests** di browser headless Chromium. |
+| **5. Security Testing** | **Lulus** | Pindaian CVE otomatis via `composer audit --locked` & `npm audit --audit-level=high` (*task-b1*), proteksi CSRF, sanitasi XSS Blade, PDO Parameterized queries, serta Dynamic HTTP Basic Auth di Staging. |
+| **6. Performance Testing** | **Lulus** | Eliminasi SQL N+1 Query pada `QueryEfficiencyTest`, penambahan indexing SQL database, kompilasi aset frontend Vite, dan produksi caching `php artisan optimize`. |
+| **7. User Acceptance Testing (UAT)** | **Tahap Staging** | Server Staging aktif di `https://simkodes-staging.sranak.com` dengan dataset uji lengkap, siap diuji langsung oleh pengurus koperasi desa sebelum cutover ke production. |
+
+---
+
+## 6. Cara Menjalankan Rangkaian Pengujian
 
 ```bash
 # 1. Jalankan seluruh pengujian PHPUnit (Backend Feature + REST API)
@@ -99,4 +113,3 @@ npx playwright test
 # 5. Jalankan Playwright dengan UI interaktif (mode debug visual)
 npx playwright test --ui
 ```
-

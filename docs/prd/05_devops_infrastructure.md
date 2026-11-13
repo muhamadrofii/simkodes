@@ -14,11 +14,11 @@ Aplikasi SIMKODES di-host pada layanan **Hostinger Business Shared Hosting** ber
 
 | Komponen | Lingkungan Staging | Lingkungan Live Production |
 | :--- | :--- | :--- |
-| **Domain / URL** | `https://simkodes-staging.sranak.com` | `https://sranak.com/simkodes` |
+| **Domain / URL** | `https://simkodes-staging.sranak.com` | `https://sranak.com/simkodes` (atau `https://simkodes.sranak.com`) |
 | **Direktori Server** | `/home/u849825724/domains/sranak.com/public_html/simkodes-staging/` | `/home/u849825724/domains/sranak.com/public_html/simkodes/` |
 | **Database** | `u849825724_simkodes_staging` | `u849825724_simkodes_prod` |
 | **Proteksi Akses** | **Terkunci** (HTTP Basic Auth `.htpasswd`) | **Terbuka** untuk umum & pengurus |
-| **Alur Rilis** | Otomatis via push branch `master` | Manual Cutover / Approval Pipeline |
+| **Alur Rilis** | Otomatis via push branch `master` | Manual Approval via `workflow_dispatch` ("DEPLOY") |
 
 ---
 
@@ -52,10 +52,22 @@ Memblokir akses publik langsung terhadap berkas konfigurasi rahasia:
 ```
 
 ### D. Struktur Permission & Direktori Framework
-Agar Laravel tidak mengalami crash `View path not found` atau `Permission denied`, struktur direktori berikut wajib memiliki hak akses `775`:
+Agar Laravel tidak mengalami crash `View path not found` atau `Permission denied`, struktur direktori berikut dibuat dan diberi hak akses `775`:
 - `storage/framework/views` (menyimpan template Blade yang dikompilasi)
 - `storage/framework/cache`
 - `storage/framework/sessions`
 - `storage/logs`
 - `bootstrap/cache`
 
+---
+
+## 4. Mekanisme Otomatisasi SSH & Port Custom Hostinger
+
+Server shared hosting Hostinger tidak menggunakan port SSH default (`22`), melainkan port kustom **`65002`**.
+
+### Standarisasi Akses Remote:
+1. **Port SSH**: `65002`.
+2. **Server IP**: `195.35.48.228`.
+3. **Akun SSH**: `u849825724`.
+4. **Multi-Secret Fallback**: Workflow CI/CD secara otomatis membaca kunci `HOSTINGER_SSH_*` maupun `SSH_*`. Jika secret port tidak didefinisikan, otomatis jatuh ke default port `65002` sehingga mencegah kegagalan pipeline dengan pesan `Bad port '-H'`.
+5. **Known Hosts Scan**: `ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts` dilakukan sebelum eksekusi rsync atau remote shell.
