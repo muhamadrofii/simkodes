@@ -16,18 +16,18 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 
 // Protected Routes (Sanctum Token Required)
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
-    Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+Route::middleware('auth:sanctum')->name('api.')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/me', [AuthController::class, 'me'])->name('me');
 
     // Anggota (RESTful CRUD API)
     Route::apiResource('members', MemberController::class);
 
     // Kategori
-    Route::get('/categories', [CategoryController::class, 'index'])->name('api.categories.index');
-    Route::get('/categories/{id}', [CategoryController::class, 'show'])->name('api.categories.show');
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{id}', [CategoryController::class, 'show'])->name('categories.show');
 
     // Inventaris
-    Route::get('/inventories', [InventoryController::class, 'index'])->name('api.inventories.index');
-    Route::get('/inventories/{id}', [InventoryController::class, 'show'])->name('api.inventories.show');
+    Route::get('/inventories', [InventoryController::class, 'index'])->name('inventories.index');
+    Route::get('/inventories/{id}', [InventoryController::class, 'show'])->name('inventories.show');
 });
