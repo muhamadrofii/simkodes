@@ -106,6 +106,15 @@ jobs:
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
             cd /home/u849825724/domains/sranak.com/public_html/simkodes
 
+            # 0. Pastikan file .env ada (Self-healing jika belum tersalin dari core/.env)
+            if [ ! -f .env ]; then
+              if [ -f /home/u849825724/domains/sranak.com/public_html/core/.env ]; then
+                cp /home/u849825724/domains/sranak.com/public_html/core/.env .env
+              elif [ -f .envprod ]; then
+                cp .envprod .env
+              fi
+            fi
+
             # 1. Aktifkan maintenance mode sementara selama proses migrasi
             php artisan down --render="errors::503" || true
 

@@ -1,9 +1,6 @@
 name: Diagnose & Fix Production 500 Error
 
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 jobs:
