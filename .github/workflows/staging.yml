@@ -54,12 +54,12 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: 8. Rsync Deployment ke Staging Server
         run: |
           rsync -avz --delete \
-            -e "ssh -p ${{ env.SSH_PORT }}" \
+            -e "ssh -p $SSH_PORT" \
             --exclude='.env' \
             --exclude='storage/app/public/' \
             --exclude='storage/logs/' \
@@ -69,11 +69,11 @@ jobs:
             --exclude='node_modules/' \
             --exclude='tests/' \
             --exclude='e2e/' \
-            ./ ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:/home/u849825724/domains/sranak.com/public_html/simkodes-staging/
+            ./ "$SSH_USER@$SSH_HOST":/home/u849825724/domains/sranak.com/public_html/simkodes-staging/
 
       - name: 9. Post-Deployment Commands (Permission, Symlink, & Cache)
         run: |
-          ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << 'EOF'
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
             cd /home/u849825724/domains/sranak.com/public_html/simkodes-staging
 
             # Buat direktori esensial & atur permission
@@ -84,8 +84,10 @@ jobs:
             cd public && ln -sfn ../storage/app/public storage || true
             cd ..
 
-            # Migrasi database staging & caching
+            # Migrasi database staging & initial seeding akun admin & kategori
             php artisan migrate --force
+            php artisan db:seed --class=UserSeeder --force
+            php artisan db:seed --class=CategorySeeder --force
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache

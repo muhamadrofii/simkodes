@@ -44,7 +44,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: 2. Eksekusi Perintah Maintenance di Server
         run: |
@@ -55,23 +55,25 @@ jobs:
 
           if [ "$TARGET" = "staging" ]; then
             APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+            DOMAIN="simkodes-staging.sranak.com"
           else
             APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+            DOMAIN="simkodes.sranak.com"
           fi
 
           echo "Mengatur maintenance mode untuk $TARGET di path $APP_PATH..."
 
           if [[ "$ACTION" == down* ]]; then
             echo "Mengaktifkan Maintenance Mode (php artisan down)..."
-            ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
+            ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
               cd $APP_PATH
               php artisan down --secret="$SECRET" --retry="$RETRY" || php artisan down
           EOF
             echo "Mode Maintenance AKTIF untuk $TARGET."
-            echo "Bypass URL: https://${TARGET == 'staging' && 'simkodes-staging.sranak.com' || 'simkodes.sranak.com'}/?secret=$SECRET"
+            echo "Bypass URL: https://$DOMAIN/?secret=$SECRET"
           else
             echo "Menonaktifkan Maintenance Mode (php artisan up)..."
-            ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
+            ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
               cd $APP_PATH
               php artisan up
           EOF

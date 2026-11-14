@@ -32,24 +32,24 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: 2. Eksekusi Dump Database di Server
         id: dump
         run: |
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-          BACKUP_FILENAME="simkodes_${{ env.TARGET }}_backup_${TIMESTAMP}.sql.gz"
+          BACKUP_FILENAME="simkodes_${TARGET}_backup_${TIMESTAMP}.sql.gz"
           echo "filename=$BACKUP_FILENAME" >> $GITHUB_OUTPUT
 
-          if [ "${{ env.TARGET }}" = "staging" ]; then
+          if [ "$TARGET" = "staging" ]; then
             APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
           else
             APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
           fi
 
-          echo "Menjalankan mysqldump untuk ${{ env.TARGET }}..."
+          echo "Menjalankan mysqldump untuk $TARGET..."
 
-          ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
             cd $APP_PATH
 
             # Ekstrak kredensial dari .env
@@ -70,10 +70,10 @@ jobs:
       - name: 3. Unduh File Backup dari Server ke Runner
         run: |
           mkdir -p ./backups
-          scp -P ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:~/backups_temp/${{ steps.dump.outputs.filename }} ./backups/
+          scp -P "$SSH_PORT" "$SSH_USER@$SSH_HOST":~/backups_temp/${{ steps.dump.outputs.filename }} ./backups/
 
           # Bersihkan file sementara di server
-          ssh -p ${{ env.SSH_PORT }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "rm -f ~/backups_temp/${{ steps.dump.outputs.filename }}"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "rm -f ~/backups_temp/${{ steps.dump.outputs.filename }}"
 
           ls -lh ./backups/
 
@@ -87,7 +87,7 @@ jobs:
       - name: 5. Ringkasan Backup
         run: |
           echo "### 📦 Backup Database Berhasil!" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target Environment:** ${{ env.TARGET }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Environment:** $TARGET" >> $GITHUB_STEP_SUMMARY
           echo "- **Nama File:** \`${{ steps.dump.outputs.filename }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Ukuran File:** $(du -h ./backups/${{ steps.dump.outputs.filename }} | cut -f1)" >> $GITHUB_STEP_SUMMARY
           echo "- **Masa Simpan:** 30 Hari di GitHub Actions Artifacts" >> $GITHUB_STEP_SUMMARY
