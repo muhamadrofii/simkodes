@@ -51,7 +51,7 @@
                     <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> PHP 8.3.<small>x</small></p>
                     <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> MySQL 8.0.<small>x</small></p>
                     <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> Bootstrap 5</p>
-                    <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> SweetAlert2</p>
+                    <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> Bootstrap 5 Modals</p>
                     <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> Flatpickr v4</p>
                     <p class="text-muted"><i class="ti ti-circle text-brand me-2"></i> laravel-dompdf v2.2.<small>x</small></p>
                 </div>

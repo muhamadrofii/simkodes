@@ -37,72 +37,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9/dist/flatpickr.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('js/flatpickr.js') }}"></script>
     <script src="{{ asset('js/image-preview.js') }}"></script>
 
-    <script>
-        function triggerSessionAlerts() {
-            @if (session('success'))
-                Swal.fire({
-                    icon: "success",
-                    title: "Berhasil!",
-                    text: {!! json_encode(session('success')) !!},
-                    showConfirmButton: false,
-                    timer: 2500,
-                    timerProgressBar: true
-                });
-            @elseif (session('error'))
-                Swal.fire({
-                    icon: "error",
-                    title: "Gagal Masuk / Terjadi Kesalahan",
-                    html: `<div class="text-dark fw-medium mt-1">{!! addslashes(session('error')) !!}</div>`,
-                    confirmButtonText: "Tutup / Coba Lagi",
-                    confirmButtonColor: "#001f3f",
-                    showConfirmButton: true,
-                    allowOutsideClick: true,
-                    customClass: {
-                        popup: 'rounded-4 shadow-lg border-0',
-                        confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
-                    }
-                });
-            @elseif (session('warning'))
-                Swal.fire({
-                    icon: "warning",
-                    title: "Peringatan",
-                    html: `<div class="text-dark fw-medium mt-1">{!! addslashes(session('warning')) !!}</div>`,
-                    confirmButtonText: "Mengerti",
-                    confirmButtonColor: "#001f3f",
-                    showConfirmButton: true
-                });
-            @elseif ($errors->any())
-                Swal.fire({
-                    icon: "error",
-                    title: "Validasi Gagal!",
-                    html: `
-                        <div class="text-start small mt-2">
-                            <p class="mb-2 text-muted">Periksa kembali data yang dimasukkan:</p>
-                            <ul class="mb-0 text-danger ps-3">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    `,
-                    confirmButtonText: "Perbaiki Data",
-                    confirmButtonColor: "#001f3f",
-                    showConfirmButton: true,
-                    customClass: {
-                        popup: 'rounded-4 shadow-lg border-0',
-                        confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
-                    }
-                });
-            @endif
-        }
-
-        document.addEventListener('turbo:load', triggerSessionAlerts);
-        document.addEventListener('DOMContentLoaded', triggerSessionAlerts);
-    </script>
+    {{-- Native Bootstrap 5 Notification Modal --}}
+    @include('layouts.modal-notification')
 </body>
 
 </html>
