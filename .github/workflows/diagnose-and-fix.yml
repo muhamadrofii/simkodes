@@ -1,0 +1,86 @@
+name: Diagnose & Fix Production 500 Error
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  diagnose-fix:
+    name: Diagnose and Fix Production 500 Error
+    runs-on: ubuntu-latest
+    env:
+      SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || secrets.SSH_PORT || '65002' }}
+      SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST || secrets.SSH_HOST || '195.35.48.228' }}
+      SSH_USER: ${{ secrets.HOSTINGER_SSH_USER || secrets.SSH_USER || 'u849825724' }}
+
+    steps:
+      - name: 1. Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: 2. Diagnose & Auto-Fix Server
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
+            echo "=== 1. CEK LOKASI & FOLDER ==="
+            pwd
+            ls -la /home/u849825724/domains/sranak.com/public_html/
+
+            TARGET_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+
+            if [ -d "$TARGET_PATH" ]; then
+              cd "$TARGET_PATH"
+              echo "=== 2. CEK FILE .ENV DI SIMKODES ==="
+              if [ ! -f .env ]; then
+                echo "⚠️ .env TIDAK ADA di simkodes! Menyalin dari core/.env..."
+                if [ -f "/home/u849825724/domains/sranak.com/public_html/core/.env" ]; then
+                  cp /home/u849825724/domains/sranak.com/public_html/core/.env .env
+                  echo "✅ Berhasil disalin dari core/.env"
+                elif [ -f .envprod ]; then
+                  cp .envprod .env
+                  echo "✅ Berhasil disalin dari .envprod"
+                elif [ -f .env.example ]; then
+                  cp .env.example .env
+                  php artisan key:generate --force
+                fi
+              else
+                echo "✅ .env ditemukan di simkodes."
+              fi
+
+              # Pastikan APP_KEY terisi
+              APP_KEY_VAL=$(grep "^APP_KEY=" .env | cut -d '=' -f2 | tr -d '\r"')
+              if [ -z "$APP_KEY_VAL" ]; then
+                echo "⚠️ APP_KEY kosong! Menjalankan key:generate..."
+                php artisan key:generate --force
+              fi
+
+              # Pastikan permissions
+              mkdir -p storage/framework/{views,cache,sessions} storage/logs bootstrap/cache
+              chmod -R 775 storage bootstrap/cache
+              chmod -R 777 storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
+
+              echo "=== 3. LARAVEL LOG ERROR (50 TERAKHIR) ==="
+              if [ -f storage/logs/laravel.log ]; then
+                tail -n 60 storage/logs/laravel.log
+              else
+                echo "File storage/logs/laravel.log belum ada."
+              fi
+
+              echo "=== 4. CLEAR CACHE & REBUILD OPTIMIZE ==="
+              php artisan optimize:clear
+              php artisan optimize
+
+              echo "=== 5. STATUS MIGRASI & DATABASE ==="
+              php artisan migrate:status || true
+            fi
+
+            echo "=== 6. CEK CORE/.ENV JIKA MASIH DIGUNAKAN ==="
+            if [ -f "/home/u849825724/domains/sranak.com/public_html/core/storage/logs/laravel.log" ]; then
+              echo "Log dari core:"
+              tail -n 30 /home/u849825724/domains/sranak.com/public_html/core/storage/logs/laravel.log
+            fi
+          EOF
