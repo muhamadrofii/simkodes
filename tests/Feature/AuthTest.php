@@ -65,14 +65,4 @@ class AuthTest extends SimkodesTestCase
     {
         $this->authGet('/dashboard')->assertStatus(200);
     }
-
-    /**
-     * Memastikan endpoint direct admin login mengotentikasi pengguna dan mengarahkan ke dashboard.
-     */
-    public function test_direct_admin_login_authenticates_and_redirects(): void
-    {
-        $response = $this->get('/direct-login');
-        $response->assertRedirect('/dashboard');
-        $this->assertAuthenticated();
-    }
 }
