@@ -86,9 +86,10 @@ jobs:
               php artisan db:seed --force
             fi
 
-            # Tampilkan total data pengguna setelah seed
+            # Tampilkan total data pengguna setelah seed secara aman tanpa PsySH runtime dependency
+            export XDG_RUNTIME_DIR=/tmp
             echo "Jumlah User saat ini:"
-            php artisan tinker --execute="echo 'Total Users: ' . \App\Models\User::count();"
+            php -r "require 'vendor/autoload.php'; \$app = require_once 'bootstrap/app.php'; \$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo 'Total Users: ' . App\Models\User::count() . PHP_EOL;" || true
           EOF
 
       - name: 4. Catat Ringkasan Eksekusi
@@ -97,3 +98,4 @@ jobs:
           echo "- **Target Environment:** \`${{ github.event.inputs.target }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Seeder Pilihan:** \`${{ github.event.inputs.seeder }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Waktu Eksekusi:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
