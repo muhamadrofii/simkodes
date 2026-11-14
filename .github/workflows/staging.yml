@@ -61,6 +61,13 @@ jobs:
           rsync -avz --delete \
             -e "ssh -p $SSH_PORT" \
             --exclude='.env' \
+            --exclude='public/member_files/' \
+            --exclude='public/officer_files/' \
+            --exclude='public/supervisor_files/' \
+            --exclude='public/category_images/' \
+            --exclude='public/incoming_letters/' \
+            --exclude='public/outgoing_letters/' \
+            --exclude='public/storage' \
             --exclude='storage/app/public/' \
             --exclude='storage/framework/' \
             --exclude='storage/logs/' \
