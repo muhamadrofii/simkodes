@@ -57,7 +57,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: 8. Pre-Deployment Safety: Automatic Production Database Snapshot
+      - name: "8. Pre-Deployment Safety: Automatic Production Database Snapshot"
         run: |
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
             cd /home/u849825724/domains/sranak.com/public_html/simkodes
