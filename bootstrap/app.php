@@ -40,6 +40,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            if (!$request->is('api/*')) {
+                return redirect()->route('login')->with('error', 'Sesi keamanan halaman telah kedaluwarsa. Silakan muat ulang dan coba kembali.');
+            }
+        });
+
         Integration::handles($exceptions);
     })->create();
 

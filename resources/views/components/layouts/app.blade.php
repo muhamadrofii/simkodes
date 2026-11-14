@@ -66,24 +66,87 @@
     <script src="{{ asset('js/image-preview.js') }}"></script>
 
     <script>
-        // menampilkan pesan dengan sweetalert
-        @if (session('success'))
-            Swal.fire({
-                icon: "success",
-                title: "Success!",
-                text: "{{ session('success') }}",
-                showConfirmButton: false,
-                timer: 2000
-            });
-        @elseif (session('error'))
-            Swal.fire({
-                icon: "error",
-                title: "Failed!",
-                text: "{{ session('error') }}",
-                showConfirmButton: false,
-                timer: 2000
-            });
-        @endif
+        // menampilkan pesan notifikasi dengan SweetAlert2 Modal
+        function triggerAppAlerts() {
+            @if (session('success'))
+                Swal.fire({
+                    icon: "success",
+                    title: "Berhasil!",
+                    text: {!! json_encode(session('success')) !!},
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
+            @elseif (session('error'))
+                Swal.fire({
+                    icon: "error",
+                    title: "Terjadi Kesalahan",
+                    html: `<div class="text-dark fw-medium mt-1">{!! addslashes(session('error')) !!}</div>`,
+                    confirmButtonText: "Tutup",
+                    confirmButtonColor: "#001f3f",
+                    showConfirmButton: true,
+                    allowOutsideClick: true,
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg border-0',
+                        confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                    }
+                });
+            @elseif (session('warning'))
+                Swal.fire({
+                    icon: "warning",
+                    title: "Peringatan",
+                    html: `<div class="text-dark fw-medium mt-1">{!! addslashes(session('warning')) !!}</div>`,
+                    confirmButtonText: "Mengerti",
+                    confirmButtonColor: "#001f3f",
+                    showConfirmButton: true
+                });
+            @elseif (session('import_errors'))
+                Swal.fire({
+                    icon: "warning",
+                    title: "Perhatian: Hasil Import Data",
+                    html: `
+                        <div class="text-start small mt-2">
+                            <p class="mb-2 text-muted">Beberapa baris data dilewati saat import:</p>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <ul class="mb-0 text-danger ps-3">
+                                    @foreach (session('import_errors') as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: "Tutup",
+                    confirmButtonColor: "#001f3f",
+                    showConfirmButton: true
+                });
+            @elseif ($errors->any())
+                Swal.fire({
+                    icon: "error",
+                    title: "Validasi Form Gagal",
+                    html: `
+                        <div class="text-start small mt-2">
+                            <p class="mb-2 text-muted">Periksa kembali data yang belum sesuai:</p>
+                            <ul class="mb-0 text-danger ps-3">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    `,
+                    confirmButtonText: "Perbaiki Data",
+                    confirmButtonColor: "#001f3f",
+                    showConfirmButton: true,
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg border-0',
+                        confirmButton: 'btn btn-primary px-4 py-2 rounded-3 fw-bold'
+                    }
+                });
+            @endif
+        }
+
+        document.addEventListener('turbo:load', triggerAppAlerts);
+        document.addEventListener('DOMContentLoaded', triggerAppAlerts);
 
         // Sidebar Toggle
         document.addEventListener('turbo:load', function() {
