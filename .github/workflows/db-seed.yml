@@ -1,0 +1,99 @@
+name: Database Seeder Operations
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Pilih Environment Target'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+      seeder:
+        description: 'Pilih Seeder yang Akan Dijalankan'
+        required: true
+        type: choice
+        options:
+          - 'UserSeeder (Akun Admin Default)'
+          - 'CategorySeeder (Kategori Master)'
+          - 'AllSafe (UserSeeder + CategorySeeder)'
+          - 'DatabaseSeeder (Full Test Data / Reset Semua Modul)'
+        default: 'AllSafe (UserSeeder + CategorySeeder)'
+      confirm_production:
+        description: 'Jika Target = production, ketik "SEED" untuk konfirmasi eksekusi'
+        required: false
+        default: 'NO'
+
+jobs:
+  run-seeder:
+    name: Execute Artisan Seeder
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT || secrets.SSH_PORT || '65002' }}
+      SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST || secrets.SSH_HOST || '195.35.48.228' }}
+      SSH_USER: ${{ secrets.HOSTINGER_SSH_USER || secrets.SSH_USER || 'u849825724' }}
+
+    steps:
+      - name: 1. Verifikasi Keamanan Production
+        run: |
+          TARGET="${{ github.event.inputs.target }}"
+          CONFIRM="${{ github.event.inputs.confirm_production }}"
+
+          if [ "$TARGET" = "production" ] && [ "$CONFIRM" != "SEED" ]; then
+            echo "::error::Eksekusi dibatalkan: Menjalankan seeder di PRODUCTION membutuhkan konfirmasi 'SEED' (input: '$CONFIRM')."
+            exit 1
+          fi
+          echo "Verifikasi target $TARGET valid."
+
+      - name: 2. Setup SSH Key untuk Hostinger
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY || secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: 3. Eksekusi Seeder di Server
+        run: |
+          TARGET="${{ github.event.inputs.target }}"
+          SEEDER_CHOICE="${{ github.event.inputs.seeder }}"
+
+          if [ "$TARGET" = "staging" ]; then
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+          else
+            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+          fi
+
+          echo "Menjalankan seeder di $TARGET ($APP_PATH)..."
+
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
+            cd $APP_PATH
+
+            if [[ "$SEEDER_CHOICE" == UserSeeder* ]]; then
+              echo "Menjalankan UserSeeder..."
+              php artisan db:seed --class=UserSeeder --force
+            elif [[ "$SEEDER_CHOICE" == CategorySeeder* ]]; then
+              echo "Menjalankan CategorySeeder..."
+              php artisan db:seed --class=CategorySeeder --force
+            elif [[ "$SEEDER_CHOICE" == AllSafe* ]]; then
+              echo "Menjalankan UserSeeder & CategorySeeder..."
+              php artisan db:seed --class=UserSeeder --force
+              php artisan db:seed --class=CategorySeeder --force
+            elif [[ "$SEEDER_CHOICE" == DatabaseSeeder* ]]; then
+              echo "Menjalankan Full DatabaseSeeder..."
+              php artisan db:seed --force
+            fi
+
+            # Tampilkan total data pengguna setelah seed
+            echo "Jumlah User saat ini:"
+            php artisan tinker --execute="echo 'Total Users: ' . \App\Models\User::count();"
+          EOF
+
+      - name: 4. Catat Ringkasan Eksekusi
+        run: |
+          echo "### 🌱 Database Seeding Berhasil Dijalankan" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Environment:** \`${{ github.event.inputs.target }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Seeder Pilihan:** \`${{ github.event.inputs.seeder }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Waktu Eksekusi:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

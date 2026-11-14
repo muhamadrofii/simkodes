@@ -11,7 +11,7 @@
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
 [![Tests](https://img.shields.io/badge/Tests-91%20Passed%20(100%25)-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)](#-pengujian--quality-assurance-qa)
-[![Workflows](https://img.shields.io/badge/CI%2FCD-7%20Modular%20Workflows-blue?style=for-the-badge&logo=github)](docs/prd/04_cicd_pipeline.md)
+[![Workflows](https://img.shields.io/badge/CI%2FCD-8%20Modular%20Workflows-blue?style=for-the-badge&logo=github)](docs/prd/04_cicd_pipeline.md)
 [![Sentry](https://img.shields.io/badge/Sentry-Cloud%20Monitored-362D59?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io/)
 
 <br/>
@@ -40,7 +40,7 @@
 
 **SIMKODES** adalah solusi perangkat lunak berbasis web yang dikembangkan khusus untuk memodernisasi tata kelola dan administrasi **Koperasi Desa Sranak**. Sistem ini menyelesaikan masalah pencatatan manual yang rentan hilang, mempercepat proses verifikasi data anggota, mengotomatisasi pencetakan Kartu Tanda Anggota (KTA) digital ber-barcode, serta menjamin transparansi penyaluran subsidi dan bantuan bagi warga desa.
 
-Sistem dirancang mengadopsi standar **Clean Architecture**, API RESTful bersertifikasi Sanctum, performa query bebas masalah $N+1$, serta pipeline deployment terotomatisasi penuh menggunakan **7 Modular GitHub Actions Workflows**.
+Sistem dirancang mengadopsi standar **Clean Architecture**, API RESTful bersertifikasi Sanctum, performa query bebas masalah $N+1$, serta pipeline deployment terotomatisasi penuh menggunakan **8 Modular GitHub Actions Workflows**.
 
 ---
 
@@ -114,15 +114,16 @@ graph TD
 
 ---
 
-## 🚀 Otomatisasi CI/CD & DevOps (7 Workflow)
+## 🚀 Otomatisasi CI/CD & DevOps (8 Workflow)
 
-Sistem mengadopsi prinsip *Single Responsibility Principle* dengan membagi alur operasional ke dalam **7 Workflow GitHub Actions modular**:
+Sistem mengadopsi prinsip *Single Responsibility Principle* dengan membagi alur operasional ke dalam **8 Workflow GitHub Actions modular**:
 
 ```text
 .github/workflows/
 ├── ci.yml            # CI: 79 PHPUnit Tests & 12 Playwright E2E Scenarios
 ├── staging.yml       # CD: Otomatisasi Deploy Staging (dengan Dynamic Basic Auth)
 ├── production.yml    # CD: Live Production Deployment (Wajib Konfirmasi "DEPLOY")
+├── db-seed.yml       # Ops: On-Demand Database Seeding (UserSeeder, CategorySeeder, AllSafe)
 ├── maintenance.yml   # Ops: Remote Toggle php artisan down / up via SSH
 ├── backup.yml        # Ops: Terjadwal Mingguan & Manual MySQL Dump ke Artifacts (30 Hari)
 ├── security.yml      # Sec: Audit Keamanan Dependensi (composer audit & npm audit)

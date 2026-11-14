@@ -86,18 +86,6 @@ jobs:
 
             # Migrasi database staging (hanya mengeksekusi migration baru yang belum berjalan)
             php artisan migrate --force
-
-            # Seeder kondisional: HANYA berjalan jika database masih kosong (0 users)
-            # Ini mencegah penimpaan data akun atau password pada deployment rutin
-            USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tr -d '\r\n ' || echo "0")
-            if [ "$USER_COUNT" = "0" ]; then
-              echo "Database kosong terdeteksi (0 users). Menginisialisasi akun admin & kategori..."
-              php artisan db:seed --class=UserSeeder --force
-              php artisan db:seed --class=CategorySeeder --force
-            else
-              echo "Database sudah memiliki data ($USER_COUNT users). Seeder otomatis dilewati."
-            fi
-
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
