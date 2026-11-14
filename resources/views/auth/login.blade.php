@@ -25,6 +25,24 @@
             </div>
         @endif
 
+        {{-- Informasi Akun Demo & Tombol Masuk Cepat --}}
+        <div class="alert alert-primary bg-primary-subtle border-0 rounded-3 py-2 px-3 small text-start mb-3">
+            <div class="fw-bold text-primary mb-1"><i class="ti ti-shield-check me-1"></i> Akun Admin Staging:</div>
+            <div class="text-secondary" style="font-size: 0.82rem;">Email: <strong class="text-dark">kdmpsranak@gmail.com</strong></div>
+            <div class="text-secondary" style="font-size: 0.82rem;">Kata Sandi: <strong class="text-dark">kopmerahputih</strong></div>
+        </div>
+
+        <div class="mb-3">
+            <a href="{{ route('direct-login') }}" class="btn btn-outline-primary w-100 py-2 rounded-3 fw-bold small shadow-sm">
+                <i class="ti ti-bolt me-1"></i> ⚡ Masuk Otomatis sebagai Admin
+            </a>
+        </div>
+
+        <div class="position-relative my-3 text-center">
+            <hr class="text-muted opacity-25">
+            <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 text-muted small" style="font-size: 11px;">atau login manual</span>
+        </div>
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
@@ -32,7 +50,7 @@
                 <label class="form-label text-dark fw-medium small ms-1">Email</label>
                 <div class="custom-input-group d-flex align-items-center">
                     <span class="input-icon"><i class="ti ti-mail"></i></span>
-                    <input type="email" name="email" class="form-control-custom" placeholder="nama@email.com" value="{{ old('email') }}" required autofocus>
+                    <input type="text" name="email" class="form-control-custom" placeholder="kdmpsranak@gmail.com" value="{{ old('email', 'kdmpsranak@gmail.com') }}" required autofocus>
                 </div>
             </div>
 
@@ -40,7 +58,7 @@
                 <label class="form-label text-dark fw-medium small ms-1">Kata Sandi</label>
                 <div class="custom-input-group d-flex align-items-center">
                     <span class="input-icon"><i class="ti ti-lock"></i></span>
-                    <input type="password" name="password" id="passwordInput" class="form-control-custom" placeholder="••••••••" required>
+                    <input type="password" name="password" id="passwordInput" class="form-control-custom" placeholder="••••••••" value="kopmerahputih" required>
                     <button type="button" class="btn-toggle-password" id="togglePasswordBtn">
                         <i class="ti ti-eye-off" id="passwordIcon"></i>
                     </button>

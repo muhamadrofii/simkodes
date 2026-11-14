@@ -17,10 +17,14 @@ class LoginController extends Controller
         $this->ensureDefaultAdminExists();
 
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect('/dashboard');
         }
 
-        return view('auth.login');
+        return response()
+            ->view('auth.login')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     public function login(Request $request)
@@ -36,49 +40,54 @@ class LoginController extends Controller
         $email = trim($request->input('email'));
         $password = $request->input('password');
 
-        $user = User::where('email', $email)->first();
+        // Cari user berdasarkan email atau nama
+        $user = User::where('email', $email)
+            ->orWhere('name', $email)
+            ->first();
+
+        // Jika input adalah 'admin', arahkan ke admin default jika belum ditemukan
+        if (!$user && (strtolower($email) === 'admin' || str_contains($email, 'admin'))) {
+            $user = User::where('email', 'admin@example.com')->first();
+        }
 
         if (!$user) {
             return back()
                 ->withInput($request->only('email'))
-                ->with('error', 'Email ' . $email . ' tidak terdaftar di sistem.');
+                ->with('error', 'Email atau akun "' . $email . '" tidak terdaftar di sistem.');
         }
 
-        if (!Hash::check($password, $user->password)) {
-            // Jika akun admin default dan input adalah password default, perbarui hash secara transparan
-            if (in_array($email, ['kdmpsranak@gmail.com', 'admin@example.com']) && $password === 'kopmerahputih') {
-                $user->password = Hash::make('kopmerahputih');
-                $user->save();
-            } else {
-                return back()
-                    ->withInput($request->only('email'))
-                    ->with('error', 'Kata sandi yang Anda masukkan salah.');
-            }
+        // Sinkronisasi otomatis untuk akun admin jika menggunakan password default
+        if (in_array($user->email, ['kdmpsranak@gmail.com', 'admin@example.com']) && $password === 'kopmerahputih') {
+            $user->password = Hash::make('kopmerahputih');
+            $user->save();
+        } elseif (!Hash::check($password, $user->password)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->with('error', 'Kata sandi yang Anda masukkan salah.');
         }
 
         // Login user dengan remember token selalu aktif (true)
-        // Ini memastikan sesi tetap bertahan meskipun session cookie ter-drop oleh reverse proxy
         Auth::login($user, true);
 
-        $request->session()->regenerate();
         $request->session()->put('last_activity', time());
+        $request->session()->save();
 
-        // Bersihkan url.intended jika pernah mengarah ke login/logout untuk mencegah redirect loop
-        $intended = session('url.intended');
-        if ($intended && (str_contains($intended, 'login') || str_contains($intended, 'logout'))) {
-            session()->forget('url.intended');
-        }
+        // Bersihkan url.intended jika pernah mengarah ke login/logout
+        session()->forget('url.intended');
 
-        return redirect('/dashboard');
+        return redirect('/dashboard')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
-     * Pastikan akun admin default selalu tersedia sebagai fail-safe di staging/production
+     * Pastikan akun admin default selalu tersedia dengan password valid
      */
     protected function ensureDefaultAdminExists(): void
     {
         try {
-            User::firstOrCreate(
+            User::updateOrCreate(
                 ['email' => 'kdmpsranak@gmail.com'],
                 [
                     'name' => 'Admin KDMPS Ranak',
@@ -86,7 +95,7 @@ class LoginController extends Controller
                 ]
             );
 
-            User::firstOrCreate(
+            User::updateOrCreate(
                 ['email' => 'admin@example.com'],
                 [
                     'name' => 'Admin User',

