@@ -79,6 +79,7 @@ jobs:
 
             mkdir -p storage/framework/{views,cache,sessions} storage/logs
             chmod -R 775 storage bootstrap/cache
+            chmod -R 777 storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
 
             # Bypass batasan symlink Hostinger via shell
             cd public && ln -sfn ../storage/app/public storage || true

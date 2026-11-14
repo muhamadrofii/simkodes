@@ -76,9 +76,10 @@ jobs:
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
             cd /home/u849825724/domains/sranak.com/public_html/simkodes-staging
 
-            # Buat direktori esensial & atur permission
+            # Buat direktori esensial & atur permission penuh untuk session & cache
             mkdir -p storage/framework/{views,cache,sessions} storage/logs
             chmod -R 775 storage bootstrap/cache
+            chmod -R 777 storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
 
             # Bypass batasan symlink Hostinger via shell
             cd public && ln -sfn ../storage/app/public storage || true
