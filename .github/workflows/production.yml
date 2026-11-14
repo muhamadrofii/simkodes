@@ -63,6 +63,7 @@ jobs:
             -e "ssh -p $SSH_PORT" \
             --exclude='.env' \
             --exclude='storage/app/public/' \
+            --exclude='storage/framework/' \
             --exclude='storage/logs/' \
             --exclude='_archive/' \
             --exclude='.git/' \

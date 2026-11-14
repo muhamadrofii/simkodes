@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-        if (app()->environment('production') || app()->environment('staging') || request()->header('x-forwarded-proto') === 'https') {
+        if (!app()->environment('local', 'testing') || request()->header('x-forwarded-proto') === 'https' || request()->secure()) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     }

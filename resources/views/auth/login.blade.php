@@ -16,6 +16,15 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger rounded-3 py-2 px-3 small border-0 shadow-sm mb-4 text-start">
+                <i class="ti ti-alert-circle me-1"></i>
+                @foreach ($errors->all() as $error)
+                    <div>{{ $error }}</div>
+                @endforeach
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
@@ -40,7 +49,7 @@
 
             <div class="mb-4 text-start">
                 <div class="form-check mb-0">
-                    <input type="checkbox" name="remember" class="form-check-input" id="remember">
+                    <input type="checkbox" name="remember" class="form-check-input" id="remember" checked>
                     <label class="form-check-label text-dark small" for="remember">Ingat saya</label>
                 </div>
             </div>

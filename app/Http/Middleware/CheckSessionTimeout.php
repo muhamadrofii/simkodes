@@ -11,10 +11,10 @@ class CheckSessionTimeout
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check()) {
-            $lastActivity = $request->session()->get('last_activity', 0);
+            $lastActivity = $request->session()->get('last_activity');
             $timeout = 7200; // 2 jam dalam detik
 
-            if (time() - $lastActivity > $timeout) {
+            if ($lastActivity && (time() - $lastActivity > $timeout)) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
