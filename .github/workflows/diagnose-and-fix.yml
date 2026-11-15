@@ -20,44 +20,28 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: 2. Diagnose Server Configuration
+      - name: 2. Diagnose Database Connections
         run: |
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
-            echo "=== 1. STRUKTUR DOMAIN & FOLDER ==="
-            pwd
-            ls -la /home/u849825724/domains/
-            ls -la /home/u849825724/domains/sranak.com/public_html/
+            echo "=== CEK SQLITE PRODUCTION ==="
+            SIM_DB="/home/u849825724/domains/sranak.com/public_html/simkodes/database/database.sqlite"
+            if [ -f "$SIM_DB" ]; then
+              echo "File SQLite ada: $(ls -lh "$SIM_DB")"
+              sqlite3 "$SIM_DB" "SELECT count(*) FROM users;" 2>/dev/null && echo "Berhasil query users via sqlite3" || echo "Gagal query sqlite3"
+            fi
 
-            TARGET_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
+            echo "=== CEK MYSQL / MARIADB USERS ==="
+            STAGING_ENV="/home/u849825724/domains/sranak.com/public_html/simkodes-staging/.env"
+            if [ -f "$STAGING_ENV" ]; then
+              STG_PASS=$(grep -i "^DB_PASSWORD=" "$STAGING_ENV" | cut -d '=' -f2- | tr -d '\r"' | tr -d "'")
+              STG_USER=$(grep -i "^DB_USERNAME=" "$STAGING_ENV" | cut -d '=' -f2- | tr -d '\r"' | tr -d "'")
+              STG_DB=$(grep -i "^DB_DATABASE=" "$STAGING_ENV" | cut -d '=' -f2- | tr -d '\r"' | tr -d "'")
 
-            if [ -d "$TARGET_PATH" ]; then
-              cd "$TARGET_PATH"
-              echo "=== 2. ISI .ENV DI SIMKODES (REDACTED) ==="
-              ls -la .env* 2>/dev/null || true
-              grep -E "^(APP_|DB_|SESSION_)" .env 2>/dev/null | sed -E 's/(PASSWORD|KEY)=.*/\1=REDACTED/' || echo "Tidak bisa membaca .env"
+              echo "Staging DB: $STG_DB (User: $STG_USER)"
+              mariadb -h 127.0.0.1 -u "$STG_USER" -p"$STG_PASS" "$STG_DB" -e "SELECT 'Staging DB OK' as status, count(*) as total_users FROM users;" 2>/dev/null || echo "Gagal koneksi Staging MySQL"
 
-              echo "=== 3. LARAVEL DATABASE CONFIG ==="
-              php -r "
-              require 'vendor/autoload.php';
-              \$app = require_once 'bootstrap/app.php';
-              \$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-              echo 'DB_DEFAULT: ' . config('database.default') . PHP_EOL;
-              \$conn = config('database.connections.' . config('database.default'));
-              echo 'Driver: ' . (\$conn['driver'] ?? 'N/A') . PHP_EOL;
-              echo 'Database: ' . (\$conn['database'] ?? 'N/A') . PHP_EOL;
-              echo 'Username: ' . (\$conn['username'] ?? 'N/A') . PHP_EOL;
-              echo 'Host: ' . (\$conn['host'] ?? 'N/A') . PHP_EOL;
-              echo 'Port: ' . (\$conn['port'] ?? 'N/A') . PHP_EOL;
-              echo 'Password Length: ' . strlen(\$conn['password'] ?? '') . PHP_EOL;
-              " || true
-
-              echo "=== 4. CEK FILE DATABASE SQLITE ==="
-              ls -la database/ 2>/dev/null || true
-
-              echo "=== 5. CEK STAGING .ENV (REDACTED) ==="
-              STAGING_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
-              if [ -d "$STAGING_PATH" ]; then
-                grep -E "^(APP_|DB_)" "$STAGING_PATH/.env" 2>/dev/null | sed -E 's/(PASSWORD|KEY)=.*/\1=REDACTED/' || echo "Tidak ada .env di staging"
-              fi
+              # Coba cek apakah user kdmp bisa connect dengan password staging
+              echo "Mencoba user u849825724_kdmp dengan password staging..."
+              mariadb -h 127.0.0.1 -u "u849825724_kdmp" -p"$STG_PASS" "u849825724_kdmp" -e "SELECT 'KDMP DB OK' as status;" 2>/dev/null && echo "✅ Password staging COCOK dengan u849825724_kdmp!" || echo "❌ Password staging TIDAK cocok dengan kdmp"
             fi
           EOF
