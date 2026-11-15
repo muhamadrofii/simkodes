@@ -41,7 +41,7 @@ jobs:
           BACKUP_FILENAME="simkodes_${TARGET}_backup_${TIMESTAMP}.sql.gz"
           echo "filename=$BACKUP_FILENAME" >> $GITHUB_OUTPUT
 
-          echo "Menjalankan mysqldump untuk target: $TARGET..."
+          echo "Menjalankan database backup untuk target: $TARGET..."
 
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "TARGET='$TARGET' BACKUP_FILENAME='$BACKUP_FILENAME' bash -s" << 'EOF'
             set -eo pipefail
@@ -55,11 +55,13 @@ jobs:
             echo "Target: $TARGET"
             echo "Working directory: $APP_PATH"
 
-            # Pastikan folder aplikasi ada
             mkdir -p "$APP_PATH"
             cd "$APP_PATH"
 
-            # Helper fungsi untuk ekstrak konfigurasi secara fleksibel (mengabaikan spasi & tanda kutip)
+            mkdir -p ~/backups_temp
+            rm -f ~/backups_temp/"$BACKUP_FILENAME"
+
+            # Helper untuk ekstrak key dari file env dengan format fleksibel
             extract_val() {
               local file="$1"
               local key="$2"
@@ -68,130 +70,115 @@ jobs:
               fi
             }
 
-            echo "=== 1. Deteksi File Konfigurasi & Environment ==="
-            ls -la .env* 2>/dev/null || echo "Tidak ada file .env* di folder lokal."
-
-            # 1. Ekstrak dari .env aktif jika ada
-            DB_DATABASE=$(extract_val ".env" "DB_DATABASE")
-            DB_USERNAME=$(extract_val ".env" "DB_USERNAME")
-            DB_PASSWORD=$(extract_val ".env" "DB_PASSWORD")
-            DB_HOST=$(extract_val ".env" "DB_HOST")
-            DB_PORT=$(extract_val ".env" "DB_PORT")
-
-            # 2. Coba baca dari .envprod lokal jika kredensial belum lengkap
-            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
-              if [ -f ".envprod" ]; then
-                echo "ℹ️ Membaca kredensial dari .envprod lokal..."
-                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(extract_val ".envprod" "DB_DATABASE")
-                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(extract_val ".envprod" "DB_USERNAME")
-                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(extract_val ".envprod" "DB_PASSWORD")
-                [ -z "$DB_HOST" ] && DB_HOST=$(extract_val ".envprod" "DB_HOST")
-                [ -z "$DB_PORT" ] && DB_PORT=$(extract_val ".envprod" "DB_PORT")
+            echo "=== 1. Deteksi Engine Database Aktif ==="
+            DB_CONNECTION=$(extract_val ".env" "DB_CONNECTION")
+            if [ -z "$DB_CONNECTION" ]; then
+              if [ -f "database/database.sqlite" ]; then
+                DB_CONNECTION="sqlite"
+              else
+                DB_CONNECTION="mysql"
               fi
             fi
+            echo "Engine Database: $DB_CONNECTION"
 
-            # 3. Coba baca dari bootstrap/cache/config.php jika ada (cached Laravel config)
-            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
-              if [ -f "bootstrap/cache/config.php" ]; then
-                echo "ℹ️ Membaca kredensial dari bootstrap/cache/config.php..."
-                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["database"] ?? "";' 2>/dev/null || true)
-                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["username"] ?? "";' 2>/dev/null || true)
-                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["password"] ?? "";' 2>/dev/null || true)
-                [ -z "$DB_HOST" ] && DB_HOST=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["host"] ?? "";' 2>/dev/null || true)
-                [ -z "$DB_PORT" ] && DB_PORT=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["port"] ?? "";' 2>/dev/null || true)
-              fi
-            fi
-
-            # 4. Fallback lokasi core/.env
-            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
-              CORE_ENV="/home/u849825724/domains/sranak.com/public_html/core/.env"
-              if [ -f "$CORE_ENV" ]; then
-                echo "ℹ️ Membaca kredensial dari $CORE_ENV..."
-                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(extract_val "$CORE_ENV" "DB_DATABASE")
-                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(extract_val "$CORE_ENV" "DB_USERNAME")
-                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(extract_val "$CORE_ENV" "DB_PASSWORD")
-                [ -z "$DB_HOST" ] && DB_HOST=$(extract_val "$CORE_ENV" "DB_HOST")
-                [ -z "$DB_PORT" ] && DB_PORT=$(extract_val "$CORE_ENV" "DB_PORT")
-              fi
-            fi
-
-            # 5. Fallback eksplisit untuk production Hostinger
-            if [ "$TARGET" = "production" ]; then
-              [ -z "$DB_DATABASE" ] && DB_DATABASE="u849825724_kdmp"
-              [ -z "$DB_USERNAME" ] && DB_USERNAME="u849825724_kdmp"
-              if [ -z "$DB_PASSWORD" ]; then
-                echo "ℹ️ Mencari DB_PASSWORD di berkas konfigurasi lain..."
-                for f in /home/u849825724/domains/sranak.com/public_html/simkodes/.envprod \
-                         /home/u849825724/domains/sranak.com/public_html/simkodes/.env \
-                         /home/u849825724/domains/sranak.com/public_html/core/.env; do
-                  if [ -f "$f" ]; then
-                    PASS_CANDIDATE=$(extract_val "$f" "DB_PASSWORD")
-                    if [ -n "$PASS_CANDIDATE" ]; then
-                      DB_PASSWORD="$PASS_CANDIDATE"
-                      echo "✅ Menemukan password dari $f"
-                      break
-                    fi
-                  fi
-                done
-              fi
-            fi
-
-            # Self-healing: jika .env tidak lengkap tetapi kita punya kredensial dari .envprod, sinkronkan
-            if [ ! -f .env ] || ! grep -q "^DB_DATABASE=" .env 2>/dev/null; then
-              if [ -f ".envprod" ]; then
-                echo "ℹ️ Menyinkronkan .envprod ke .env agar konfigurasi tetap utuh..."
-                cp .envprod .env || true
-              fi
-            fi
-
-            DB_HOST="${DB_HOST:-127.0.0.1}"
-            DB_PORT="${DB_PORT:-3306}"
-
-            echo "=== 2. Hasil Ekstraksi Kredensial ==="
-            echo "Database: $DB_DATABASE"
-            echo "Username: $DB_USERNAME"
-            echo "Host:     $DB_HOST"
-            echo "Port:     $DB_PORT"
-            echo "Password: (panjang ${#DB_PASSWORD} karakter)"
-
-            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
-              echo "❌ Error: Kredensial database tidak lengkap (Database: '$DB_DATABASE', Password set: $([ -n "$DB_PASSWORD" ] && echo 'YA' || echo 'TIDAK'))!"
-              exit 1
-            fi
-
-            echo "Menghubungkan ke database $DB_DATABASE..."
-
-            mkdir -p ~/backups_temp
-            rm -f ~/backups_temp/"$BACKUP_FILENAME"
-
-            # Eksekusi mysqldump dengan fallback TCP -> Socket
             DUMP_SUCCESS=false
 
-            echo "Mencoba mysqldump via TCP (${DB_HOST}:${DB_PORT})..."
-            if mysqldump --single-transaction --quick -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+            # Cabang 1: Engine SQLite
+            if [ "$DB_CONNECTION" = "sqlite" ] || [ -f "database/database.sqlite" -a "$TARGET" = "production" -a ! -f ".envprod" ]; then
+              echo "ℹ️ Menjalankan prosedur backup untuk SQLite..."
+              SQLITE_PATH="database/database.sqlite"
+              
+              CUSTOM_DB=$(extract_val ".env" "DB_DATABASE")
+              if [ -n "$CUSTOM_DB" ] && [ -f "$CUSTOM_DB" ]; then
+                SQLITE_PATH="$CUSTOM_DB"
+              fi
+
+              if [ ! -f "$SQLITE_PATH" ]; then
+                echo "❌ Error: Berkas SQLite tidak ditemukan di $SQLITE_PATH!"
+                exit 1
+              fi
+
+              SQLITE_SIZE=$(ls -lh "$SQLITE_PATH" | awk '{print $5}')
+              echo "Menemukan basis data SQLite: $SQLITE_PATH ($SQLITE_SIZE)"
+
+              if command -v sqlite3 >/dev/null 2>&1; then
+                echo "Mengekspor dump SQL menggunakan sqlite3 CLI..."
+                sqlite3 "$SQLITE_PATH" .dump | gzip > ~/backups_temp/"$BACKUP_FILENAME"
+              else
+                echo "sqlite3 CLI tidak tersedia, mengompres berkas database secara langsung..."
+                gzip -c "$SQLITE_PATH" > ~/backups_temp/"$BACKUP_FILENAME"
+              fi
+
               DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
               if [ "$DUMP_SIZE" -gt 500 ]; then
-                echo "✅ Mysqldump via TCP berhasil (Ukuran: $DUMP_SIZE bytes)."
+                echo "✅ Backup SQLite berhasil dibuat (Ukuran: $DUMP_SIZE bytes)."
                 DUMP_SUCCESS=true
               fi
-            fi
 
-            if [ "$DUMP_SUCCESS" = false ]; then
-              echo "⚠️ Mysqldump via TCP gagal. Output error:"
-              if [ -f /tmp/dump_err.log ]; then cat /tmp/dump_err.log; fi
-              echo "Mencoba fallback mysqldump via local socket..."
-              
-              if mysqldump --single-transaction --quick -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+            # Cabang 2: Engine MySQL / MariaDB
+            else
+              echo "ℹ️ Menjalankan prosedur backup untuk MySQL / MariaDB..."
+              DB_DATABASE=$(extract_val ".env" "DB_DATABASE")
+              DB_USERNAME=$(extract_val ".env" "DB_USERNAME")
+              DB_PASSWORD=$(extract_val ".env" "DB_PASSWORD")
+              DB_HOST=$(extract_val ".env" "DB_HOST")
+              DB_PORT=$(extract_val ".env" "DB_PORT")
+
+              if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+                if [ -f ".envprod" ]; then
+                  echo "ℹ️ Mengambil kredensial dari .envprod..."
+                  [ -z "$DB_DATABASE" ] && DB_DATABASE=$(extract_val ".envprod" "DB_DATABASE")
+                  [ -z "$DB_USERNAME" ] && DB_USERNAME=$(extract_val ".envprod" "DB_USERNAME")
+                  [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(extract_val ".envprod" "DB_PASSWORD")
+                  [ -z "$DB_HOST" ] && DB_HOST=$(extract_val ".envprod" "DB_HOST")
+                  [ -z "$DB_PORT" ] && DB_PORT=$(extract_val ".envprod" "DB_PORT")
+                fi
+              fi
+
+              if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+                if [ -f "bootstrap/cache/config.php" ]; then
+                  echo "ℹ️ Mengambil kredensial dari cache konfigurasi Laravel..."
+                  [ -z "$DB_DATABASE" ] && DB_DATABASE=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["database"] ?? "";' 2>/dev/null || true)
+                  [ -z "$DB_USERNAME" ] && DB_USERNAME=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["username"] ?? "";' 2>/dev/null || true)
+                  [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["password"] ?? "";' 2>/dev/null || true)
+                  [ -z "$DB_HOST" ] && DB_HOST=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["host"] ?? "";' 2>/dev/null || true)
+                  [ -z "$DB_PORT" ] && DB_PORT=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["port"] ?? "";' 2>/dev/null || true)
+                fi
+              fi
+
+              DB_HOST="${DB_HOST:-127.0.0.1}"
+              DB_PORT="${DB_PORT:-3306}"
+
+              echo "Database: $DB_DATABASE | User: $DB_USERNAME | Host: $DB_HOST:$DB_PORT"
+
+              if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+                echo "❌ Error: Kredensial database MySQL tidak ditemukan di .env!"
+                exit 1
+              fi
+
+              echo "Mencoba mysqldump via TCP (${DB_HOST}:${DB_PORT})..."
+              if mysqldump --single-transaction --quick -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
                 DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
                 if [ "$DUMP_SIZE" -gt 500 ]; then
-                  echo "✅ Mysqldump via socket berhasil (Ukuran: $DUMP_SIZE bytes)."
+                  echo "✅ Mysqldump via TCP berhasil (Ukuran: $DUMP_SIZE bytes)."
                   DUMP_SUCCESS=true
+                fi
+              fi
+
+              if [ "$DUMP_SUCCESS" = false ]; then
+                echo "⚠️ Mysqldump via TCP gagal, mencoba fallback via local socket..."
+                if mysqldump --single-transaction --quick -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+                  DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
+                  if [ "$DUMP_SIZE" -gt 500 ]; then
+                    echo "✅ Mysqldump via socket berhasil (Ukuran: $DUMP_SIZE bytes)."
+                    DUMP_SUCCESS=true
+                  fi
                 fi
               fi
             fi
 
             if [ "$DUMP_SUCCESS" = false ]; then
-              echo "❌ Error fatal: Mysqldump gagal pada seluruh metode koneksi!"
+              echo "❌ Error fatal: Backup database gagal!"
               if [ -f /tmp/dump_err.log ]; then cat /tmp/dump_err.log; fi
               exit 1
             fi
