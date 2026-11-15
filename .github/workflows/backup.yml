@@ -59,54 +59,107 @@ jobs:
             mkdir -p "$APP_PATH"
             cd "$APP_PATH"
 
-            # Auto-healing & discovery file .env
-            if [ ! -f .env ]; then
-              echo "⚠️ .env tidak ditemukan di $(pwd). Mencari sumber kredensial..."
-              if [ -f "/home/u849825724/domains/sranak.com/public_html/core/.env" ]; then
-                echo "✅ Menemukan .env di core/, menyalin ke $(pwd)/.env..."
-                cp "/home/u849825724/domains/sranak.com/public_html/core/.env" .env
-              elif [ -f "../core/.env" ]; then
-                echo "✅ Menemukan .env di ../core/, menyalin ke .env..."
-                cp "../core/.env" .env
-              elif [ -f ".envprod" ]; then
-                echo "✅ Menemukan .envprod, menyalin ke .env..."
-                cp .envprod .env
+            # Helper fungsi untuk ekstrak konfigurasi secara fleksibel (mengabaikan spasi & tanda kutip)
+            extract_val() {
+              local file="$1"
+              local key="$2"
+              if [ -f "$file" ]; then
+                grep -i -E "^[[:space:]]*${key}[[:space:]]*=" "$file" 2>/dev/null | head -n 1 | sed -E "s/^[[:space:]]*${key}[[:space:]]*=[[:space:]]*//" | tr -d '\r"' | tr -d "'" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' || true
+              fi
+            }
+
+            echo "=== 1. Deteksi File Konfigurasi & Environment ==="
+            ls -la .env* 2>/dev/null || echo "Tidak ada file .env* di folder lokal."
+
+            # 1. Ekstrak dari .env aktif jika ada
+            DB_DATABASE=$(extract_val ".env" "DB_DATABASE")
+            DB_USERNAME=$(extract_val ".env" "DB_USERNAME")
+            DB_PASSWORD=$(extract_val ".env" "DB_PASSWORD")
+            DB_HOST=$(extract_val ".env" "DB_HOST")
+            DB_PORT=$(extract_val ".env" "DB_PORT")
+
+            # 2. Coba baca dari .envprod lokal jika kredensial belum lengkap
+            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+              if [ -f ".envprod" ]; then
+                echo "ℹ️ Membaca kredensial dari .envprod lokal..."
+                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(extract_val ".envprod" "DB_DATABASE")
+                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(extract_val ".envprod" "DB_USERNAME")
+                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(extract_val ".envprod" "DB_PASSWORD")
+                [ -z "$DB_HOST" ] && DB_HOST=$(extract_val ".envprod" "DB_HOST")
+                [ -z "$DB_PORT" ] && DB_PORT=$(extract_val ".envprod" "DB_PORT")
               fi
             fi
 
-            # Ekstrak kredensial dari .env aktif
-            DB_DATABASE=""
-            DB_USERNAME=""
-            DB_PASSWORD=""
-            DB_HOST="127.0.0.1"
-            DB_PORT="3306"
-
-            if [ -f .env ]; then
-              DB_DATABASE=$(grep -m 1 "^DB_DATABASE=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-              DB_USERNAME=$(grep -m 1 "^DB_USERNAME=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-              DB_PASSWORD=$(grep -m 1 "^DB_PASSWORD=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" || true)
-              DB_HOST=$(grep -m 1 "^DB_HOST=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-              DB_PORT=$(grep -m 1 "^DB_PORT=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-            fi
-
-            # Fallback jika target production masih belum terbaca dari .env lokal
-            if [ -z "$DB_DATABASE" ] && [ "$TARGET" = "production" ]; then
-              echo "ℹ️ Membaca kredensial fallback dari core/.env..."
-              if [ -f "/home/u849825724/domains/sranak.com/public_html/core/.env" ]; then
-                DB_DATABASE=$(grep -m 1 "^DB_DATABASE=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-                DB_USERNAME=$(grep -m 1 "^DB_USERNAME=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-                DB_PASSWORD=$(grep -m 1 "^DB_PASSWORD=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" || true)
-                DB_HOST=$(grep -m 1 "^DB_HOST=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
-                DB_PORT=$(grep -m 1 "^DB_PORT=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+            # 3. Coba baca dari bootstrap/cache/config.php jika ada (cached Laravel config)
+            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+              if [ -f "bootstrap/cache/config.php" ]; then
+                echo "ℹ️ Membaca kredensial dari bootstrap/cache/config.php..."
+                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["database"] ?? "";' 2>/dev/null || true)
+                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["username"] ?? "";' 2>/dev/null || true)
+                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["password"] ?? "";' 2>/dev/null || true)
+                [ -z "$DB_HOST" ] && DB_HOST=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["host"] ?? "";' 2>/dev/null || true)
+                [ -z "$DB_PORT" ] && DB_PORT=$(php -r '$c = require "bootstrap/cache/config.php"; echo $c["database"]["connections"]["mysql"]["port"] ?? "";' 2>/dev/null || true)
               fi
             fi
 
-            if [ -z "$DB_DATABASE" ]; then
-              echo "❌ Error: Kredensial database tidak ditemukan di .env!"
+            # 4. Fallback lokasi core/.env
+            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+              CORE_ENV="/home/u849825724/domains/sranak.com/public_html/core/.env"
+              if [ -f "$CORE_ENV" ]; then
+                echo "ℹ️ Membaca kredensial dari $CORE_ENV..."
+                [ -z "$DB_DATABASE" ] && DB_DATABASE=$(extract_val "$CORE_ENV" "DB_DATABASE")
+                [ -z "$DB_USERNAME" ] && DB_USERNAME=$(extract_val "$CORE_ENV" "DB_USERNAME")
+                [ -z "$DB_PASSWORD" ] && DB_PASSWORD=$(extract_val "$CORE_ENV" "DB_PASSWORD")
+                [ -z "$DB_HOST" ] && DB_HOST=$(extract_val "$CORE_ENV" "DB_HOST")
+                [ -z "$DB_PORT" ] && DB_PORT=$(extract_val "$CORE_ENV" "DB_PORT")
+              fi
+            fi
+
+            # 5. Fallback eksplisit untuk production Hostinger
+            if [ "$TARGET" = "production" ]; then
+              [ -z "$DB_DATABASE" ] && DB_DATABASE="u849825724_kdmp"
+              [ -z "$DB_USERNAME" ] && DB_USERNAME="u849825724_kdmp"
+              if [ -z "$DB_PASSWORD" ]; then
+                echo "ℹ️ Mencari DB_PASSWORD di berkas konfigurasi lain..."
+                for f in /home/u849825724/domains/sranak.com/public_html/simkodes/.envprod \
+                         /home/u849825724/domains/sranak.com/public_html/simkodes/.env \
+                         /home/u849825724/domains/sranak.com/public_html/core/.env; do
+                  if [ -f "$f" ]; then
+                    PASS_CANDIDATE=$(extract_val "$f" "DB_PASSWORD")
+                    if [ -n "$PASS_CANDIDATE" ]; then
+                      DB_PASSWORD="$PASS_CANDIDATE"
+                      echo "✅ Menemukan password dari $f"
+                      break
+                    fi
+                  fi
+                done
+              fi
+            fi
+
+            # Self-healing: jika .env tidak lengkap tetapi kita punya kredensial dari .envprod, sinkronkan
+            if [ ! -f .env ] || ! grep -q "^DB_DATABASE=" .env 2>/dev/null; then
+              if [ -f ".envprod" ]; then
+                echo "ℹ️ Menyinkronkan .envprod ke .env agar konfigurasi tetap utuh..."
+                cp .envprod .env || true
+              fi
+            fi
+
+            DB_HOST="${DB_HOST:-127.0.0.1}"
+            DB_PORT="${DB_PORT:-3306}"
+
+            echo "=== 2. Hasil Ekstraksi Kredensial ==="
+            echo "Database: $DB_DATABASE"
+            echo "Username: $DB_USERNAME"
+            echo "Host:     $DB_HOST"
+            echo "Port:     $DB_PORT"
+            echo "Password: (panjang ${#DB_PASSWORD} karakter)"
+
+            if [ -z "$DB_DATABASE" ] || [ -z "$DB_PASSWORD" ]; then
+              echo "❌ Error: Kredensial database tidak lengkap (Database: '$DB_DATABASE', Password set: $([ -n "$DB_PASSWORD" ] && echo 'YA' || echo 'TIDAK'))!"
               exit 1
             fi
 
-            echo "Koneksi ke database: $DB_DATABASE (User: $DB_USERNAME, Host: ${DB_HOST:-127.0.0.1})..."
+            echo "Menghubungkan ke database $DB_DATABASE..."
 
             mkdir -p ~/backups_temp
             rm -f ~/backups_temp/"$BACKUP_FILENAME"
@@ -114,8 +167,8 @@ jobs:
             # Eksekusi mysqldump dengan fallback TCP -> Socket
             DUMP_SUCCESS=false
 
-            echo "Mencoba mysqldump via TCP (${DB_HOST:-127.0.0.1}:${DB_PORT:-3306})..."
-            if mysqldump --single-transaction --quick -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+            echo "Mencoba mysqldump via TCP (${DB_HOST}:${DB_PORT})..."
+            if mysqldump --single-transaction --quick -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
               DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
               if [ "$DUMP_SIZE" -gt 500 ]; then
                 echo "✅ Mysqldump via TCP berhasil (Ukuran: $DUMP_SIZE bytes)."
