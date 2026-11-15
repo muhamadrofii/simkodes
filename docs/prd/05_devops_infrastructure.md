@@ -14,11 +14,11 @@ Aplikasi SIMKODES di-host pada layanan **Hostinger Business Shared Hosting** ber
 
 | Komponen | Lingkungan Staging | Lingkungan Live Production |
 | :--- | :--- | :--- |
-| **Domain / URL** | `https://simkodes-staging.sranak.com` | `https://sranak.com/simkodes` (atau `https://simkodes.sranak.com`) |
-| **Direktori Server** | `/home/u849825724/domains/sranak.com/public_html/simkodes-staging/` | `/home/u849825724/domains/sranak.com/public_html/simkodes/` |
-| **Database** | `u849825724_simkodes_staging` | `u849825724_simkodes_prod` |
-| **Proteksi Akses** | **Terkunci** (HTTP Basic Auth `.htpasswd`) | **Terbuka** untuk umum & pengurus |
-| **Alur Rilis** | Otomatis via push branch `master` | Manual Approval via `workflow_dispatch` ("DEPLOY") |
+| **Domain / URL** | `https://simkodes-staging.sranak.com` | `https://simkodes.sranak.com` |
+| **Direktori Server** | `/home/u849825724/domains/sranak.com/public_html/simkodes-staging/` | `/home/u849825724/domains/sranak.com/public_html/simkodes/` *(Migrasi dari `core/`)* |
+| **Database** | `u849825724_simkodes_staging` | `u849825724_kdmp` *(MySQL Hostinger, 0% data loss)* |
+| **Proteksi Akses** | **Terkunci** (HTTP Basic Auth `.htpasswd`) | **Terbuka** untuk publik & pengurus koperasi |
+| **Alur Rilis** | Otomatis via push branch `master` | Manual Gated Approval via `workflow_dispatch` ("DEPLOY") |
 
 ---
 
@@ -58,6 +58,32 @@ Agar Laravel tidak mengalami crash `View path not found` atau `Permission denied
 - `storage/framework/sessions`
 - `storage/logs`
 - `bootstrap/cache`
+
+### E. Pre-Deployment Safety Snapshot (Zero Data Loss)
+Sebelum rilis kode baru disinkronisasikan ke production, pipeline secara otomatis mengambil cadangan database terkompresi:
+```bash
+mysqldump -u $DB_USER -p$DB_PASS $DB_NAME | gzip > ~/backups/pre_deploy_$(date +%Y%m%d_%H%M%S).sql.gz
+```
+Hal ini memastikan pemulihan instan dapat dilakukan jika terdapat anomali pada migrasi baru.
+
+### F. Self-Healing Environment Recovery (.env Protection)
+Untuk mencegah error 500 akibat hilangnya file kredensial saat migrasi struktur folder, skrip rilis secara otomatis memeriksa keberadaan `.env`:
+```bash
+if [ ! -f .env ]; then
+  if [ -f /home/u849825724/domains/sranak.com/public_html/core/.env ]; then
+    cp /home/u849825724/domains/sranak.com/public_html/core/.env .env
+  elif [ -f .envprod ]; then
+    cp .envprod .env
+  fi
+fi
+```
+
+### G. Branded SIMKODES Maintenance Pre-Rendering (HTTP 503)
+Selama proses migrasi skema database, sistem menampilkan halaman pemeliharaan kustom dengan branding resmi SIMKODES:
+```bash
+php artisan down --render="errors.503" || true
+```
+Template dirender statis ke `storage/framework/down`, disajikan langsung oleh web server LiteSpeed tanpa perlu mem-boot aplikasi Laravel, lengkap dengan animasi roda berputar dan auto-refresh 30 detik.
 
 ---
 

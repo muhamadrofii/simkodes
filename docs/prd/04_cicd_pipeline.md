@@ -29,8 +29,11 @@ flowchart TD
         STG --> BAUTH["Inject HTTP Basic Auth"]
         BAUTH --> RSYNC_STG["Rsync to simkodes-staging"]
 
-        PROD_TRIGGER["Manual Trigger: confirm_deploy='DEPLOY'"] --> PROD["production.yml (CD Live Production - ON HOLD)"]
-        PROD --> RSYNC_PROD["Rsync to Live simkodes"]
+        PROD_TRIGGER["Manual Trigger: confirm_deploy='DEPLOY'"] --> PROD["production.yml (CD Live Production - ACTIVE)"]
+        PROD --> SNAPSHOT["Pre-Deploy DB Snapshot"]
+        SNAPSHOT --> RSYNC_PROD["Rsync to Live /public_html/simkodes"]
+        RSYNC_PROD --> HEAL["Self-Healing .env & Branded 503"]
+        HEAL --> MIGRATE["php artisan migrate --force & optimize"]
     end
 
     subgraph Operations & Observability
@@ -61,14 +64,19 @@ flowchart TD
   3. Rsync file ke folder staging Hostinger (`simkodes-staging/`).
   4. Post-deploy via SSH: permission `chmod 775`, symlink shell fix `ln -sfn`, migrasi DB staging, dan caching produksi (`config:cache`, `route:cache`, `view:cache`).
 
-### C. [production.yml](file:///c:/code/sranak/simkodes/.github/workflows/production.yml) — Continuous Deployment Production (ON HOLD)
-- **Status**: **STANDBY / DITAHAN** (Menunggu persetujuan UAT pengurus koperasi).
-- **Pemicu**: **Hanya `workflow_dispatch` (Manual)** dengan parameter `confirm_deploy` wajib bernilai `"DEPLOY"`. Tidak akan pernah ter-deploy secara otomatis dari push maupun PR.
+### C. [production.yml](file:///c:/code/sranak/simkodes/.github/workflows/production.yml) — Continuous Deployment Production (ACTIVE)
+- **Status**: **AKTIF & LIVE** (Dimigrasikan dari legacy `core/` ke standard `/public_html/simkodes/` dengan jaminan Zero Data Loss).
+- **Pemicu**: **Hanya `workflow_dispatch` (Manual)** dengan parameter `confirm_deploy` wajib bernilai `"DEPLOY"`. Tidak akan pernah ter-deploy secara otomatis dari push maupun PR untuk keamanan tingkat enterprise.
 - **Fungsi**:
-  1. Validasi string konfirmasi `"DEPLOY"`.
-  2. Build aset produksi murni tanpa Basic Auth.
-  3. Rsync ke direktori live `public_html/simkodes/`.
-  4. Eksekusi `php artisan migrate --force` dan `php artisan optimize`.
+  1. **Validasi Approval Gate**: Validasi string konfirmasi `"DEPLOY"`.
+  2. **Build Aset Produksi**: Kompilasi Vite frontend dan autoloader Composer (`--no-dev --optimize-autoloader`).
+  3. **Pre-Deployment Safety Snapshot**: Menjalankan remote `mysqldump` terkompresi `.sql.gz` ke `~/backups/` sesaat sebelum proses rilis berjalan untuk perlindungan data instan.
+  4. **Rsync Code Isolation**: Rsync ke direktori live `public_html/simkodes/` dengan pengecualian ketat: `--exclude='.env'`, `--exclude='public/member_files/'`, `--exclude='public/officer_files/'`, dan `--exclude='storage/'`. Seluruh file upload anggota dan pengurus tetap utuh 100%.
+  5. **Self-Healing Environment**: Verifikasi keberadaan file `.env`. Jika belum ada, otomatis menyalin dari `core/.env` atau `.envprod`.
+  6. **Branded Maintenance Pre-Rendering**: Mengaktifkan `php artisan down --render="errors.503"` untuk menyajikan halaman pemeliharaan kustom SIMKODES Navy dengan auto-refresh 30 detik.
+  7. **Setup Direktori & Symlink Fix**: Membuat direktori storage framework (`chmod 775/777`) dan bypass restriksi symlink Hostinger via native shell `ln -sfn ../storage/app/public storage`.
+  8. **Migrasi Inkremental Aman**: Mengeksekusi migrasi baru saja (`php artisan migrate --force`) **tanpa** fresh atau seed.
+  9. **Optimasi & Go-Live**: Menjalankan `php artisan optimize` dan `php artisan up`.
 
 ### D. [maintenance.yml](file:///c:/code/sranak/simkodes/.github/workflows/maintenance.yml) — Kontrol Maintenance Mode Remote
 - **Pemicu**: `workflow_dispatch` (Manual).
@@ -77,7 +85,7 @@ flowchart TD
   - `action`: `down` (Aktifkan maintenance) atau `up` (Nonaktifkan maintenance).
   - `secret`: Token rahasia untuk bypass URL admin (`?secret=TOKEN`).
   - `retry_after`: Header `Retry-After` HTTP 503 (default: `3600` detik).
-- **Fungsi**: Mengeksekusi `php artisan down --secret=...` atau `php artisan up` langsung di server Hostinger via SSH.
+- **Fungsi**: Mengeksekusi `php artisan down --render="errors.503" --secret=...` atau `php artisan up` langsung di server Hostinger via SSH dengan template khusus SIMKODES Navy.
 
 ### E. [backup.yml](file:///c:/code/sranak/simkodes/.github/workflows/backup.yml) — Database Backup Automation
 - **Pemicu**: Terjadwal mingguan (`cron: '0 2 * * 0'`) & `workflow_dispatch`.

@@ -125,3 +125,17 @@ $data = $query->paginate($limit)->appends($request->query());
 ```
 Method `appends()` terdaftar resmi di interface contract `Illuminate\Contracts\Pagination\Paginator`, menjamin kepatuhan tipe 100% dan menghilangkan error IDE.
 
+---
+
+## 6. Standarisasi Komponen UI, Notifikasi, & Error Views
+
+### A. Notifikasi Interaktif Native Bootstrap 5
+- Menggantikan seluruh ketergantungan library eksternal SweetAlert2 dengan komponen modal native Bootstrap 5 terpadu: [modal-notification.blade.php](file:///c:/code/sranak/simkodes/resources/views/layouts/modal-notification.blade.php).
+- Menangani session flash messages standar Laravel: `session('success')`, `session('error')`, `session('warning')`, dan `session('info')`.
+- Otomatis memicu modal konfirmasi hapus data berbasis event handler JavaScript tanpa bergantung pada library pihak ketiga.
+
+### B. Pemisahan Modular CSS Error & Maintenance ([public/css/errors.css](file:///c:/code/sranak/simkodes/public/css/errors.css))
+- Seluruh aturan CSS halaman status sistem (ambient glowing background orbs, kartu semi-transparan, status badge, pulsing indicator, tipografi, dan animasi rotasi) dipisahkan secara modular ke dalam file CSS eksternal [public/css/errors.css](file:///c:/code/sranak/simkodes/public/css/errors.css).
+- Template Blade error ([404.blade.php](file:///c:/code/sranak/simkodes/resources/views/errors/404.blade.php), [500.blade.php](file:///c:/code/sranak/simkodes/resources/views/errors/500.blade.php), dan [503.blade.php](file:///c:/code/sranak/simkodes/resources/views/errors/503.blade.php)) tetap ramping, rapi, dan mudah dirawat.
+- Mendukung *pre-rendering* statis pada mode maintenance `php artisan down --render="errors.503"` tanpa dependensi sesi atau database runtime.
+

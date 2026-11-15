@@ -34,10 +34,11 @@ SIMKODES menyediakan kontrol mode pemeliharaan otomatis melalui GitHub Actions `
 ### A. Opsi Workflow Maintenance
 - **Target**: Pilihan antara `staging` atau `production`.
 - **Aksi**:
-  - `down`: Mengaktifkan mode pemeliharaan dengan `php artisan down --secret="SECRET" --retry=3600`.
+  - `down`: Mengaktifkan mode pemeliharaan dengan `php artisan down --render="errors.503" --secret="SECRET" --retry=3600`.
   - `up`: Menonaktifkan mode pemeliharaan dan membawa aplikasi kembali online dengan `php artisan up`.
+- **Branded Template 503**: Menyajikan tampilan khusus bertema SIMKODES Navy ([503.blade.php](file:///c:/code/sranak/simkodes/resources/views/errors/503.blade.php)) dengan stylesheet eksternal [public/css/errors.css](file:///c:/code/sranak/simkodes/public/css/errors.css), animasi roda berputar, dan penghitung waktu mundur auto-refresh 30 detik.
 - **Bypass Token**: Memungkinkan developer/pengurus koperasi membuka aplikasi saat maintenance melalui query parameter khusus:
-  `https://simkodes-staging.sranak.com/?secret=simkodes-secret-bypass`
+  `https://simkodes.sranak.com/?secret=simkodes-secret-bypass`
 
 ---
 
@@ -52,22 +53,14 @@ SIMKODES menyediakan kontrol mode pemeliharaan otomatis melalui GitHub Actions `
 
 ---
 
-## 5. Rencana Cutover ke Server Production (Go-Live Roadmap)
+## 5. Status Cutover ke Server Production (Go-Live Status)
 
-> [!IMPORTANT]
-> **Status Deployment Production: HOLD (DITAHAN).**
-> Deployment live ke production tidak akan pernah berjalan otomatis. Hanya dieksekusi secara manual setelah seluruh pengujian penerimaan pengguna (UAT) di Staging dinyatakan selesai oleh tim koperasi.
+> [!NOTE]
+> **Status Deployment Production: SELESAI & LIVE (COMPLETED).**
+> Server live production (`https://simkodes.sranak.com`) telah berhasil dimigrasikan dari format folder lama `core/` ke struktur modern `/public_html/simkodes/` dengan jaminan **Zero Data Loss** (Database `u849825724_kdmp` dan berkas pengguna tetap utuh 100%).
 
-Tahapan cutover berurutan ketika sudah siap rilis:
-1. **Jalankan Workflow Backup Database Lama**:
-   - Picu workflow [backup.yml](file:///c:/code/sranak/simkodes/.github/workflows/backup.yml) untuk mengarsipkan database saat ini.
-2. **Verifikasi Final Staging**:
-   - Pastikan seluruh pengujian manual di `https://simkodes-staging.sranak.com` telah disetujui tim koperasi.
-3. **Audit Keamanan Terakhir**:
-   - Pastikan workflow [security.yml](file:///c:/code/sranak/simkodes/.github/workflows/security.yml) lulus tanpa kerentanan high/critical.
-4. **Trigger Deployment Production Terproteksi**:
-   - Buka GitHub Actions $\rightarrow$ Workflow **Continuous Deployment - Production**.
-   - Masukkan input konfirmasi: `"DEPLOY"`.
-   - Workflow akan mengeksekusi rsync ke direktori live `public_html/simkodes/`, migrasi DB live, dan `php artisan optimize`.
-5. **Verifikasi Pasif Pasca-Rilis**:
-   - Pantau dashboard Sentry Cloud selama 30 menit pertama untuk memastikan zero unhandled exception.
+### Riwayat Eksekusi Rilis Produksi:
+1. **Pre-Deployment Safety Snapshot**: Berhasil mengekstrak arsip database `u849825724_kdmp` terkompresi sebelum sinkronisasi kode.
+2. **Migrasi Struktur Web Root**: Direktori kerja server aktif di `/home/u849825724/domains/sranak.com/public_html/simkodes/` dengan Document Root hPanel Hostinger yang telah diarahkan secara presisi.
+3. **Penyempurnaan Notifikasi & UI**: Menghapus tombol akun bypass staging dan mengganti seluruh popup SweetAlert2 dengan Modal Native Bootstrap 5 terintegrasi.
+4. **Verifikasi Operasional**: Endpoint `https://simkodes.sranak.com/login` mengembalikan status **HTTP 200 OK** dengan SSL terverifikasi dan sesi aman.

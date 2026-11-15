@@ -29,7 +29,9 @@ Seluruh dokumentasi disusun secara terpisah (*modular*) dan terstruktur untuk me
   - 12 Playwright E2E Headless Browser Tests (7 spec files)
 - **Arsitektur CI/CD**: 7 Workflow Modular di `.github/workflows/` (`ci`, `staging`, `production`, `maintenance`, `backup`, `security`, `monitoring`).
 - **DevOps Safeguard**:
-  - Live Production **ON HOLD** dengan gerbang konfirmasi input manual `"DEPLOY"`.
+  - Live Production **LIVE & AKTIF** di `/public_html/simkodes/` dengan gerbang konfirmasi input manual `"DEPLOY"`, pre-deploy snapshot, dan self-healing environment.
   - Staging terproteksi HTTP Basic Auth `.htpasswd` dinamis via OpenSSL.
   - Multi-secret fallback otomatis untuk port SSH `65002`.
+  - Halaman pemeliharaan kustom SIMKODES Navy (`503.blade.php`) dan error pages (`404.blade.php`, `500.blade.php`) dengan stylesheet modular `public/css/errors.css`.
+- **UI & UX Standard**: Modal Notifikasi Native Bootstrap 5 terintegrasi menggantikan library eksternal SweetAlert2.
 - **Monitoring & Observability**: Sentry Cloud error tracking + HTTP status ping berkala tiap 6 jam.
