@@ -67,7 +67,7 @@ jobs:
             echo "Mengaktifkan Maintenance Mode (php artisan down)..."
             ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
               cd $APP_PATH
-              php artisan down --secret="$SECRET" --retry="$RETRY" || php artisan down
+              php artisan down --render="errors.503" --secret="$SECRET" --retry="$RETRY" || php artisan down --render="errors.503"
           EOF
             echo "Mode Maintenance AKTIF untuk $TARGET."
             echo "Bypass URL: https://$DOMAIN/?secret=$SECRET"

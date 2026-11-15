@@ -116,7 +116,7 @@ jobs:
             fi
 
             # 1. Aktifkan maintenance mode sementara selama proses migrasi
-            php artisan down --render="errors::503" || true
+            php artisan down --render="errors.503" || true
 
             # 2. Setup direktori storage & permission
             mkdir -p storage/framework/{views,cache,sessions} storage/logs
