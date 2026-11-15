@@ -41,21 +41,22 @@ jobs:
           BACKUP_FILENAME="simkodes_${TARGET}_backup_${TIMESTAMP}.sql.gz"
           echo "filename=$BACKUP_FILENAME" >> $GITHUB_OUTPUT
 
-          if [ "$TARGET" = "staging" ]; then
-            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
-          else
-            APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
-          fi
+          echo "Menjalankan mysqldump untuk target: $TARGET..."
 
-          echo "Menjalankan mysqldump untuk target: $TARGET di path: $APP_PATH..."
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "TARGET='$TARGET' BACKUP_FILENAME='$BACKUP_FILENAME' bash -s" << 'EOF'
+            set -eo pipefail
 
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << EOF
-            # Pastikan folder aplikasi ada
-            if [ ! -d "$APP_PATH" ]; then
-              echo "⚠️ Direktori $APP_PATH tidak ditemukan, membuat direktori..."
-              mkdir -p "$APP_PATH"
+            if [ "$TARGET" = "staging" ]; then
+              APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+            else
+              APP_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
             fi
 
+            echo "Target: $TARGET"
+            echo "Working directory: $APP_PATH"
+
+            # Pastikan folder aplikasi ada
+            mkdir -p "$APP_PATH"
             cd "$APP_PATH"
 
             # Auto-healing & discovery file .env
@@ -74,55 +75,75 @@ jobs:
             fi
 
             # Ekstrak kredensial dari .env aktif
-            DB_DATABASE=\$(grep -E "^[[:space:]]*DB_DATABASE=" .env 2>/dev/null | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-            DB_USERNAME=\$(grep -E "^[[:space:]]*DB_USERNAME=" .env 2>/dev/null | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-            DB_PASSWORD=\$(grep -E "^[[:space:]]*DB_PASSWORD=" .env 2>/dev/null | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\''' || true)
-            DB_HOST=\$(grep -E "^[[:space:]]*DB_HOST=" .env 2>/dev/null | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-            DB_PORT=\$(grep -E "^[[:space:]]*DB_PORT=" .env 2>/dev/null | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
+            DB_DATABASE=""
+            DB_USERNAME=""
+            DB_PASSWORD=""
+            DB_HOST="127.0.0.1"
+            DB_PORT="3306"
+
+            if [ -f .env ]; then
+              DB_DATABASE=$(grep -m 1 "^DB_DATABASE=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+              DB_USERNAME=$(grep -m 1 "^DB_USERNAME=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+              DB_PASSWORD=$(grep -m 1 "^DB_PASSWORD=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" || true)
+              DB_HOST=$(grep -m 1 "^DB_HOST=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+              DB_PORT=$(grep -m 1 "^DB_PORT=" .env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+            fi
 
             # Fallback jika target production masih belum terbaca dari .env lokal
-            if [ -z "\$DB_DATABASE" ] && [ "$TARGET" = "production" ]; then
+            if [ -z "$DB_DATABASE" ] && [ "$TARGET" = "production" ]; then
               echo "ℹ️ Membaca kredensial fallback dari core/.env..."
               if [ -f "/home/u849825724/domains/sranak.com/public_html/core/.env" ]; then
-                DB_DATABASE=\$(grep -E "^[[:space:]]*DB_DATABASE=" /home/u849825724/domains/sranak.com/public_html/core/.env | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-                DB_USERNAME=\$(grep -E "^[[:space:]]*DB_USERNAME=" /home/u849825724/domains/sranak.com/public_html/core/.env | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-                DB_PASSWORD=\$(grep -E "^[[:space:]]*DB_PASSWORD=" /home/u849825724/domains/sranak.com/public_html/core/.env | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\''' || true)
-                DB_HOST=\$(grep -E "^[[:space:]]*DB_HOST=" /home/u849825724/domains/sranak.com/public_html/core/.env | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
-                DB_PORT=\$(grep -E "^[[:space:]]*DB_PORT=" /home/u849825724/domains/sranak.com/public_html/core/.env | head -n 1 | cut -d '=' -f2- | tr -d '\r"\'\'' ' || true)
+                DB_DATABASE=$(grep -m 1 "^DB_DATABASE=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+                DB_USERNAME=$(grep -m 1 "^DB_USERNAME=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+                DB_PASSWORD=$(grep -m 1 "^DB_PASSWORD=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" || true)
+                DB_HOST=$(grep -m 1 "^DB_HOST=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
+                DB_PORT=$(grep -m 1 "^DB_PORT=" /home/u849825724/domains/sranak.com/public_html/core/.env | cut -d '=' -f2- | tr -d '\r"' | tr -d "'" | tr -d ' ' || true)
               fi
             fi
 
-            if [ -z "\$DB_DATABASE" ]; then
+            if [ -z "$DB_DATABASE" ]; then
               echo "❌ Error: Kredensial database tidak ditemukan di .env!"
               exit 1
             fi
 
-            echo "Koneksi ke database: \$DB_DATABASE (User: \$DB_USERNAME, Host: \${DB_HOST:-127.0.0.1})..."
+            echo "Koneksi ke database: $DB_DATABASE (User: $DB_USERNAME, Host: ${DB_HOST:-127.0.0.1})..."
 
             mkdir -p ~/backups_temp
-            rm -f ~/backups_temp/${BACKUP_FILENAME}
+            rm -f ~/backups_temp/"$BACKUP_FILENAME"
 
             # Eksekusi mysqldump dengan fallback TCP -> Socket
-            set -o pipefail
-            if mysqldump --single-transaction --quick -h "\${DB_HOST:-127.0.0.1}" -P "\${DB_PORT:-3306}" -u "\$DB_USERNAME" -p"\$DB_PASSWORD" "\$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/${BACKUP_FILENAME}; then
-              echo "✅ Mysqldump via TCP berhasil."
-            else
-              echo "⚠️ Mysqldump via TCP gagal, mencoba fallback via local socket..."
-              cat /tmp/dump_err.log
-              mysqldump --single-transaction --quick -u "\$DB_USERNAME" -p"\$DB_PASSWORD" "\$DB_DATABASE" | gzip > ~/backups_temp/${BACKUP_FILENAME}
+            DUMP_SUCCESS=false
+
+            echo "Mencoba mysqldump via TCP (${DB_HOST:-127.0.0.1}:${DB_PORT:-3306})..."
+            if mysqldump --single-transaction --quick -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+              DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
+              if [ "$DUMP_SIZE" -gt 500 ]; then
+                echo "✅ Mysqldump via TCP berhasil (Ukuran: $DUMP_SIZE bytes)."
+                DUMP_SUCCESS=true
+              fi
             fi
 
-            # Validasi ukuran hasil backup
-            BACKUP_SIZE=\$(wc -c < ~/backups_temp/${BACKUP_FILENAME} 2>/dev/null || echo 0)
-            echo "Ukuran file dump: \$BACKUP_SIZE bytes"
+            if [ "$DUMP_SUCCESS" = false ]; then
+              echo "⚠️ Mysqldump via TCP gagal. Output error:"
+              if [ -f /tmp/dump_err.log ]; then cat /tmp/dump_err.log; fi
+              echo "Mencoba fallback mysqldump via local socket..."
+              
+              if mysqldump --single-transaction --quick -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" 2>/tmp/dump_err.log | gzip > ~/backups_temp/"$BACKUP_FILENAME"; then
+                DUMP_SIZE=$(wc -c < ~/backups_temp/"$BACKUP_FILENAME" 2>/dev/null || echo 0)
+                if [ "$DUMP_SIZE" -gt 500 ]; then
+                  echo "✅ Mysqldump via socket berhasil (Ukuran: $DUMP_SIZE bytes)."
+                  DUMP_SUCCESS=true
+                fi
+              fi
+            fi
 
-            if [ "\$BACKUP_SIZE" -lt 500 ]; then
-              echo "❌ Error: File dump terlalu kecil (\$BACKUP_SIZE bytes), kemungkinan gagal!"
+            if [ "$DUMP_SUCCESS" = false ]; then
+              echo "❌ Error fatal: Mysqldump gagal pada seluruh metode koneksi!"
               if [ -f /tmp/dump_err.log ]; then cat /tmp/dump_err.log; fi
               exit 1
             fi
 
-            echo "✅ Backup database berhasil dibuat di ~/backups_temp/${BACKUP_FILENAME}"
+            echo "✅ Backup database berhasil dibuat di ~/backups_temp/$BACKUP_FILENAME"
           EOF
 
       - name: 3. Unduh File Backup dari Server ke Runner
