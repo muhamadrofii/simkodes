@@ -20,64 +20,44 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: 2. Diagnose & Auto-Fix Server
+      - name: 2. Diagnose Server Configuration
         run: |
           ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" << 'EOF'
-            echo "=== 1. CEK LOKASI & FOLDER ==="
+            echo "=== 1. STRUKTUR DOMAIN & FOLDER ==="
             pwd
+            ls -la /home/u849825724/domains/
             ls -la /home/u849825724/domains/sranak.com/public_html/
 
             TARGET_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes"
 
             if [ -d "$TARGET_PATH" ]; then
               cd "$TARGET_PATH"
-              echo "=== 2. CEK FILE .ENV DI SIMKODES ==="
-              if [ ! -f .env ]; then
-                echo "⚠️ .env TIDAK ADA di simkodes! Menyalin dari core/.env..."
-                if [ -f "/home/u849825724/domains/sranak.com/public_html/core/.env" ]; then
-                  cp /home/u849825724/domains/sranak.com/public_html/core/.env .env
-                  echo "✅ Berhasil disalin dari core/.env"
-                elif [ -f .envprod ]; then
-                  cp .envprod .env
-                  echo "✅ Berhasil disalin dari .envprod"
-                elif [ -f .env.example ]; then
-                  cp .env.example .env
-                  php artisan key:generate --force
-                fi
-              else
-                echo "✅ .env ditemukan di simkodes."
+              echo "=== 2. ISI .ENV DI SIMKODES (REDACTED) ==="
+              ls -la .env* 2>/dev/null || true
+              grep -E "^(APP_|DB_|SESSION_)" .env 2>/dev/null | sed -E 's/(PASSWORD|KEY)=.*/\1=REDACTED/' || echo "Tidak bisa membaca .env"
+
+              echo "=== 3. LARAVEL DATABASE CONFIG ==="
+              php -r "
+              require 'vendor/autoload.php';
+              \$app = require_once 'bootstrap/app.php';
+              \$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+              echo 'DB_DEFAULT: ' . config('database.default') . PHP_EOL;
+              \$conn = config('database.connections.' . config('database.default'));
+              echo 'Driver: ' . (\$conn['driver'] ?? 'N/A') . PHP_EOL;
+              echo 'Database: ' . (\$conn['database'] ?? 'N/A') . PHP_EOL;
+              echo 'Username: ' . (\$conn['username'] ?? 'N/A') . PHP_EOL;
+              echo 'Host: ' . (\$conn['host'] ?? 'N/A') . PHP_EOL;
+              echo 'Port: ' . (\$conn['port'] ?? 'N/A') . PHP_EOL;
+              echo 'Password Length: ' . strlen(\$conn['password'] ?? '') . PHP_EOL;
+              " || true
+
+              echo "=== 4. CEK FILE DATABASE SQLITE ==="
+              ls -la database/ 2>/dev/null || true
+
+              echo "=== 5. CEK STAGING .ENV (REDACTED) ==="
+              STAGING_PATH="/home/u849825724/domains/sranak.com/public_html/simkodes-staging"
+              if [ -d "$STAGING_PATH" ]; then
+                grep -E "^(APP_|DB_)" "$STAGING_PATH/.env" 2>/dev/null | sed -E 's/(PASSWORD|KEY)=.*/\1=REDACTED/' || echo "Tidak ada .env di staging"
               fi
-
-              # Pastikan APP_KEY terisi
-              APP_KEY_VAL=$(grep "^APP_KEY=" .env | cut -d '=' -f2 | tr -d '\r"')
-              if [ -z "$APP_KEY_VAL" ]; then
-                echo "⚠️ APP_KEY kosong! Menjalankan key:generate..."
-                php artisan key:generate --force
-              fi
-
-              # Pastikan permissions
-              mkdir -p storage/framework/{views,cache,sessions} storage/logs bootstrap/cache
-              chmod -R 775 storage bootstrap/cache
-              chmod -R 777 storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
-
-              echo "=== 3. LARAVEL LOG ERROR (50 TERAKHIR) ==="
-              if [ -f storage/logs/laravel.log ]; then
-                tail -n 60 storage/logs/laravel.log
-              else
-                echo "File storage/logs/laravel.log belum ada."
-              fi
-
-              echo "=== 4. CLEAR CACHE & REBUILD OPTIMIZE ==="
-              php artisan optimize:clear
-              php artisan optimize
-
-              echo "=== 5. STATUS MIGRASI & DATABASE ==="
-              php artisan migrate:status || true
-            fi
-
-            echo "=== 6. CEK CORE/.ENV JIKA MASIH DIGUNAKAN ==="
-            if [ -f "/home/u849825724/domains/sranak.com/public_html/core/storage/logs/laravel.log" ]; then
-              echo "Log dari core:"
-              tail -n 30 /home/u849825724/domains/sranak.com/public_html/core/storage/logs/laravel.log
             fi
           EOF
